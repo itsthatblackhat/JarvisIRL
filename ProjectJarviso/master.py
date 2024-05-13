@@ -1,6 +1,9 @@
 import memory
 import tensorflow as tf
+
+from visualization import activity_visualization, communication_visualization
 from subnet import CerebrumNeural, CerebellumNeural, BrainstemNeural, ThalamusNeural, HypothalamusNeural, BasalGangliaNeural, LimbicNeural, ReticularNeural
+import threading
 
 class MasterNeural:
     def __init__(self, input_size, output_size):
@@ -76,8 +79,30 @@ class MasterNeural:
 def main():
     input_size = 100
     output_size = 10
+
+    # Initialize MasterNeural
     master_neural = MasterNeural(input_size, output_size)
+
+    # Define activity data and communication data
+    activity_data = {}  # Placeholder for activity data
+    communication_data = {}  # Placeholder for communication data
+
+    # Start the visualization threads
+    activity_visualization_thread = threading.Thread(target=activity_visualization.start_activity_visualization, args=(activity_data, master_neural.subnets.keys()))
+    communication_visualization_thread = threading.Thread(target=communication_visualization.start_communication_visualization, args=(communication_data, master_neural.subnets.keys()))
+
+    # Start the threads
+    activity_visualization_thread.start()
+    communication_visualization_thread.start()
+
+    # Run MasterNeural
     master_neural.run()
+
+    # Join the visualization threads to ensure they terminate when the main thread terminates
+    activity_visualization_thread.join()
+    communication_visualization_thread.join()
+
 
 if __name__ == "__main__":
     main()
+
