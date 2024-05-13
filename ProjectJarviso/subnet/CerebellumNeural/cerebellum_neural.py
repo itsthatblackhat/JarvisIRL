@@ -1,4 +1,3 @@
-# cerebellum_neural.py
 import tensorflow as tf
 
 class CerebellumNeural:
@@ -11,8 +10,8 @@ class CerebellumNeural:
     def build_model(self):
         # Define the layers and architecture of the neural network using TensorFlow
         model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu', input_shape=(self.input_size,)),
-            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu', input_shape=(self.input_size,)),
+            tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(self.output_size, activation='softmax')
         ])
         # Compile the model

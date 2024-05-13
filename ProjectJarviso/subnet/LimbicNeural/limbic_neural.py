@@ -12,8 +12,8 @@ class LimbicNeural:
     def build_model(self):
         # Define the layers and architecture of the neural network using TensorFlow
         model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu', input_shape=(self.input_size,)),
-            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu', input_shape=(self.input_size,)),
+            tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(self.output_size, activation='softmax')
         ])
         # Compile the model
@@ -22,9 +22,9 @@ class LimbicNeural:
                       metrics=['accuracy'])
         return model
 
-    def train(self, X_train, y_train):
+    def train(self, X_train, y_train, epochs=10):
         # Train the neural network
-        self.model.fit(X_train, y_train, epochs=10)
+        self.model.fit(X_train, y_train, epochs=epochs)
 
     def predict(self, X_test):
         # Use the trained model to make predictions
