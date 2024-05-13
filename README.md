@@ -13,7 +13,7 @@ JarvisIRL is an artificial intelligence project aimed at creating a virtual assi
 ## Installation
 1. Clone the repository to your local machine:
    ```
-   git clone [https://github.com/itsthatblackhat/JarvisIRL/JarvisIRL.git]
+   git clone https://github.com/itsthatblackhat/JarvisIRL.git
    ```
 2. Install the required dependencies using pip:
    ```
@@ -23,7 +23,7 @@ JarvisIRL is an artificial intelligence project aimed at creating a virtual assi
 ## Usage
 1. Navigate to the project directory:
    ```
-   cd Project-JarvisIRL
+   cd JarvisIRL
    ```
 2. Run the `master.py` file to start the JarvisIRL virtual assistant:
    ```
@@ -34,7 +34,7 @@ JarvisIRL is an artificial intelligence project aimed at creating a virtual assi
 ## Project Structure
 The project directory structure is organized as follows:
 ```
-Project-JarvisIRL/
+JarvisIRL/
 │
 ├── cerebellum_neural.py        # Implementation of the Cerebellum neural network
 ├── cerebrum_neural.py          # Implementation of the Cerebrum neural network
@@ -49,6 +49,10 @@ Project-JarvisIRL/
 ├── memory.py                   # Implementation of the Memory class
 ├── memory_imprinting.py        # Implementation of the MemoryImprinting class
 ├── subnet.py                   # Subnet module containing neural network classes
+├── visualization/             # Directory containing visualization modules
+│   ├── communication_visualization.py   # Implementation of CommunicationVisualization class
+│   ├── activity_visualization.py        # Implementation of ActivityVisualization class
+│
 ├── requirements.txt            # List of project dependencies
 └── README.md                   # Project README file
 ```
