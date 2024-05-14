@@ -1,5 +1,4 @@
 # cerebrum_neural.py
-
 import tensorflow as tf
 
 class CerebrumNeural:
@@ -12,7 +11,8 @@ class CerebrumNeural:
     def build_model(self):
         # Define the layers and architecture of the neural network using TensorFlow
         model = tf.keras.Sequential([
-            tf.keras.layers.Dense(128, activation='relu', input_shape=(self.input_size,)),
+            tf.keras.layers.Embedding(input_dim=self.input_size, output_dim=128),
+            tf.keras.layers.GlobalAveragePooling1D(),
             tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(self.output_size, activation='softmax')
         ])
@@ -31,4 +31,8 @@ class CerebrumNeural:
         predictions = self.model.predict(X_test)
         return predictions
 
-    # Add any additional methods specific to the functionality of the CerebrumNeural network
+    def make_decision(self, decision_data):
+        # Make decisions based on input and past experiences
+        # Example: Analyze past experiences stored in memory to influence decision-making
+        decision = None  # Placeholder for decision
+        return decision

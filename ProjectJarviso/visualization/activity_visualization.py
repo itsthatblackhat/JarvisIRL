@@ -1,35 +1,24 @@
-# visualization/activity_visualization.py
-
-import matplotlib.pyplot as plt
+from model_renderer import ModelRenderer
+import moderngl
+import numpy as np
 
 class ActivityVisualization:
     def __init__(self, brain_regions):
         self.brain_regions = brain_regions
+        self.ctx = moderngl.create_standalone_context()
 
     def plot_activity(self, activity_data):
-        fig, ax = plt.subplots(figsize=(10, 6))
+        # Initialize Model Renderer
+        model_renderer = ModelRenderer(self.ctx, "C:/JarvisIRL/ProjectJarviso/BrainModel/Brain_Model.fbx")
+        model_renderer.load_model()
 
-        # Define colors for each brain region
-        region_colors = {
-            "cerebrum": "blue",
-            "cerebellum": "green",
-            "brainstem": "red",
-            "thalamus": "purple",
-            "hypothalamus": "orange",
-            "basal_ganglia": "yellow",
-            "limbic": "cyan",
-            "reticular": "magenta"
-        }
+        # Set up matrices (replace with actual camera and model positioning)
+        model_matrix = np.eye(4)
+        view_matrix = np.eye(4)
+        projection_matrix = np.eye(4)
 
-        # Plot activity for each brain region
-        for region, activity in activity_data.items():
-            ax.plot(activity, label=region, color=region_colors.get(region, "black"))
-
-        ax.set_title("Brain Activity Visualization")
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Activity Level")
-        ax.legend()
-        plt.show()
+        # Render the model
+        model_renderer.render(model_matrix, view_matrix, projection_matrix)
 
 def start_activity_visualization(activity_data, brain_regions):
     visualization = ActivityVisualization(brain_regions)
