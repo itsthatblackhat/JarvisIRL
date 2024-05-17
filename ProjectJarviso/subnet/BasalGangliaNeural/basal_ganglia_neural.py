@@ -46,3 +46,5 @@ class BasalGangliaNeural:
 
 
     # Add any additional methods specific to the functionality of the BasalGangliaNeural network
+# end of basal_ganglia_neural.py
+#---------------------------------

@@ -44,3 +44,5 @@ class CerebellumNeural:
         self.model_renderer.render(activity_data)
 
     # Add any additional methods specific to the functionality of the CerebellumNeural network
+# end of cerebellum_neural.py
+#---------------------------------

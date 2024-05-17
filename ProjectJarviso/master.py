@@ -1,91 +1,87 @@
+import numpy as np
 import logging
 import moderngl
-import memory
 import threading
-from visualization import activity_visualization
-from visualization import communication_visualization
-from subnet import CerebrumNeural, CerebellumNeural, BrainstemNeural, ThalamusNeural, HypothalamusNeural, \
-    BasalGangliaNeural, LimbicNeural, ReticularNeural
-from model_renderer import ModelRenderer
+from pathlib import Path
+from subnet import CerebrumNeural, CerebellumNeural, BrainstemNeural, ThalamusNeural, HypothalamusNeural, BasalGangliaNeural, LimbicNeural, ReticularNeural
+from memory.memory import Memory
+from memory.memory_imprinting import MemoryImprinting
+from model_renderer import ModelRenderer  # Import the ModelRenderer here to avoid circular import
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 class MasterNeural:
     def __init__(self, input_size, output_size, ctx, model_file):
+        logging.info("Initializing MasterNeural")
+
+        # Initialize ModelRenderer
+        self.model_renderer = ModelRenderer(ctx, str(model_file))
+
         # Initialize sub-neural networks
         self.subnets = {
             "cerebrum": CerebrumNeural(input_size, output_size),
-            "cerebellum": CerebellumNeural(input_size, output_size, ModelRenderer(ctx, model_file)),
-            "brainstem": BrainstemNeural(input_size, output_size, ModelRenderer(ctx, model_file)),  # Pass ModelRenderer instance
-            "thalamus": ThalamusNeural(input_size, output_size, ModelRenderer(ctx, model_file)),
-            "hypothalamus": HypothalamusNeural(input_size, output_size, ModelRenderer(ctx, model_file)),  # Pass ModelRenderer instance
-            "basal_ganglia": BasalGangliaNeural(input_size, output_size, ModelRenderer(ctx, model_file)),  # Pass ModelRenderer instance
-            "limbic": LimbicNeural(input_size, output_size, ModelRenderer(ctx, model_file)),  # Pass ModelRenderer instance
-            "reticular": ReticularNeural(input_size, output_size, ModelRenderer(ctx, model_file))  # Pass ModelRenderer instance
+            "cerebellum": CerebellumNeural(input_size, output_size, self.model_renderer),
+            "brainstem": BrainstemNeural(input_size, output_size, self.model_renderer),
+            "thalamus": ThalamusNeural(input_size, output_size, self.model_renderer),
+            "hypothalamus": HypothalamusNeural(input_size, output_size, self.model_renderer),
+            "basal_ganglia": BasalGangliaNeural(input_size, output_size, self.model_renderer),
+            "limbic": LimbicNeural(input_size, output_size, self.model_renderer),
+            "reticular": ReticularNeural(input_size, output_size, self.model_renderer)
         }
 
         # Initialize memory module
-        self.memory = memory.Memory()
+        self.memory = Memory()
+        self.memory_imprinting = MemoryImprinting()
 
     def communicate(self):
-        # Define functions for communication between sub-networks
         logging.debug("Communicating...")
 
     def coordinate(self):
-        # Handle data flow, routing, and synchronization
         logging.debug("Coordinating...")
 
     def receive_user_input(self):
-        # Receive user input from the console
         user_input = input("You: ")
         logging.debug(f"Received user input: {user_input}")
         return user_input
 
     def interpret_intents(self, user_input):
-        # Interpret intents and extract relevant information
         logging.debug("Interpreting intents...")
-        # Retrieve past interactions from memory
         past_interactions = self.retrieve_memories()
-        # Analyze past interactions and adjust decision-making
-        # Example: If similar inputs led to positive outcomes in the past, prioritize those actions
-        # Example: If certain inputs consistently led to errors, adjust decision-making to avoid similar inputs
-        # For simplicity, let's assume no learning for now
         intents = {}  # Placeholder for interpreted intents
         return intents
 
     def retrieve_memories(self):
-        # Retrieve relevant memories from the memory module
         logging.debug("Retrieving memories...")
         return self.memory.retrieve_memories()
 
     def update_memory_imprints(self, memories):
-        # Update memory imprints based on interactions
         logging.debug("Updating memory imprints...")
-        self.memory.update_memory_imprints(memories)
+        self.memory_imprinting.update_memory_imprints(memories)
 
     def make_decisions(self, intents, memories):
-        # Based on user input and memory, decide which sub-network(s) to activate
-        # For now, let's assume it activates all sub-networks
         logging.debug("Making decisions...")
         decisions = {subnet: True for subnet in self.subnets}
         return decisions
 
     def execute_actions(self, decisions):
-        # Execute actions (e.g., motor control, speech synthesis)
-        # For now, let's print the decisions
         logging.debug("Executing actions...")
         for subnet, decision in decisions.items():
-            print(f"Executing action for {subnet} with decision: {decision}")
+            if decision:
+                model_matrix = np.eye(4)
+                view_matrix = np.eye(4)
+                projection_matrix = np.eye(4)
+                logging.debug(f"Model Matrix:\n{model_matrix}")
+                logging.debug(f"View Matrix:\n{view_matrix}")
+                logging.debug(f"Projection Matrix:\n{projection_matrix}")
+                self.model_renderer.render(model_matrix, view_matrix, projection_matrix)
+            else:
+                logging.debug(f"No action executed for {subnet}")
 
     def handle_errors(self):
-        # Implement error handling mechanisms
-        # For now, let's just pass
         logging.debug("Handling errors...")
 
     def ensure_safety(self):
-        # Ensure safety (e.g., avoid harmful actions)
-        # For now, let's just pass
         logging.debug("Ensuring safety...")
 
     def run(self):
@@ -100,13 +96,18 @@ class MasterNeural:
             self.ensure_safety()
 
 def main():
-    input_size = 100
-    output_size = 10
-    ctx = moderngl.create_standalone_context()
-    model_file = r"c:\JarvisIRL\ProjectJarviso\BrainModel\Brain_Model.fbx"
+    input_size = 100  # Example input size
+    output_size = 10  # Example output size
 
-    # Initialize MasterNeural
+    # Initialize model rendering context and file
+    ctx = moderngl.create_standalone_context()
+    model_file = Path("C:/JarvisIRL/ProjectJarviso/BrainModel/brain3D.3mf")
+
+    # Initialize and run the master neural network
     master_neural = MasterNeural(input_size, output_size, ctx, model_file)
+
+    from visualization import activity_visualization
+    from visualization import communication_visualization
 
     # Define activity data and communication data
     activity_data = {}  # Placeholder for activity data
@@ -114,10 +115,10 @@ def main():
 
     # Start the visualization threads
     activity_visualization_thread = threading.Thread(target=activity_visualization.start_activity_visualization,
-                                                     args=(activity_data, master_neural.subnets.keys()))
+                                                     args=(activity_data, master_neural.subnets.keys(), master_neural.model_renderer))
     communication_visualization_thread = threading.Thread(
         target=communication_visualization.start_communication_visualization,
-        args=(communication_data, master_neural.subnets.keys()))
+        args=(communication_data, master_neural.subnets.keys(), master_neural.model_renderer))
 
     # Start the threads
     activity_visualization_thread.start()
