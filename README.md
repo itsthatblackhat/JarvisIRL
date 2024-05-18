@@ -10,6 +10,7 @@ JarvisIRL is an artificial intelligence project aimed at creating a virtual assi
 - **Decision-Making**: Based on user input and past experiences stored in memory, JarvisIRL makes decisions to perform specific actions or provide relevant responses.
 - **Error Handling and Safety**: The virtual assistant implements mechanisms for error handling and ensuring safety, minimizing the risk of harmful actions.
 
+( NOTE: run the testmod file to generate the .txt from the 3MF if you are using your own 3MF model )
 ## Installation
 1. Clone the repository to your local machine:
    ```
