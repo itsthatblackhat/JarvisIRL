@@ -4,13 +4,17 @@ import moderngl
 import moderngl_window as mglw
 
 class ModelRenderer:
-    def __init__(self, context, model_file):
+    def __init__(self, context, model_file, magnet_file):
         self.context = context
         self.model_file = model_file
+        self.magnet_file = magnet_file
         self.vertices, self.faces = self.load_3mf(model_file)
         self.normals = self.calculate_normals(self.vertices, self.faces)
         self.program = self.create_program()
         self.create_vertex_buffer()
+        self.magnet_points = self.load_magnet_points(magnet_file)
+        self.pieces = self.identify_pieces()
+        self.edges = self.find_edges(self.pieces)
 
     def load_3mf(self, model_file):
         wrapper = lib3mf.get_wrapper()
@@ -85,9 +89,48 @@ class ModelRenderer:
         self.vbo = self.context.buffer(buffer_data)
         self.vao = self.context.simple_vertex_array(self.program, self.vbo, 'in_vert', 'in_norm')
 
+    def load_magnet_points(self, magnet_file):
+        with open(magnet_file, 'r') as f:
+            magnet_points = [list(map(float, line.strip().split(','))) for line in f]
+        return np.array(magnet_points, dtype='f4')
+
+    def identify_pieces(self):
+        pieces = {}
+        for i, face in enumerate(self.faces):
+            for vertex in face:
+                if vertex not in pieces:
+                    pieces[vertex] = []
+                pieces[vertex].append(i)
+        return pieces
+
+    def find_edges(self, pieces):
+        edges = []
+        for piece in pieces:
+            boundary_edges = {}
+            for face in self.faces[pieces[piece]]:
+                for i in range(3):
+                    edge = tuple(sorted((face[i], face[(i + 1) % 3])))
+                    if edge in boundary_edges:
+                        boundary_edges.pop(edge)
+                    else:
+                        boundary_edges[edge] = edge
+            edges.append(list(boundary_edges.values()))
+        return edges
+
+    def apply_transformations(self, vertices, magnet_points):
+        # Translate each piece to its magnet point
+        translated_vertices = []
+        for i, piece in enumerate(vertices):
+            translation_vector = magnet_points[i % len(magnet_points)] - np.mean(piece, axis=0)
+            translated_vertices.append(piece + translation_vector)
+        return np.vstack(translated_vertices)
+
     def render(self, model_matrix, view_matrix, projection_matrix):
         self.context.clear(0.1, 0.1, 0.1)
         self.context.enable(moderngl.DEPTH_TEST)
+
+        # Apply transformations before rendering
+        self.vertices = self.apply_transformations(self.vertices, self.magnet_points)
 
         model_matrix = np.array(model_matrix, dtype='f4').reshape(4, 4)
         view_matrix = np.array(view_matrix, dtype='f4').reshape(4, 4)
@@ -107,7 +150,7 @@ class RendererWindow(mglw.WindowConfig):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.renderer = ModelRenderer(self.ctx, 'C:\\JarvisIRL\\ProjectJarviso\\BrainModel\\brain3D.3mf')
+        self.renderer = ModelRenderer(self.ctx, 'C:\\JarvisIRL\\ProjectJarviso\\BrainModel\\brain3D.3mf', 'C:\\JarvisIRL\\ProjectJarviso\\BrainModel\\magnet_points.txt')
         self.rotation = 0
         self.translation = np.array([0.0, 0.0, -5.0])
 
