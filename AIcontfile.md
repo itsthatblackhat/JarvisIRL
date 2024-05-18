@@ -66,9 +66,6 @@ The visualization module contains scripts for visualizing different aspects of t
 3. **Test and Validate**: Conduct comprehensive testing to ensure all components work seamlessly together.
 4. **Documentation**: Create detailed documentation for each module and script, including setup instructions and usage guidelines.
 
-
-
-Notes For AI continued development of JarvisIRL: 
 ## Directory Structure
 
 Here is our directory structure:
