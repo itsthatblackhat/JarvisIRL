@@ -7,7 +7,6 @@ class ModelRenderer:
     def __init__(self, context, model_file, magnet_file):
         self.context = context
         self.model_file = model_file
-        self.magnet_file = magnet_file
         self.vertices, self.faces = self.load_3mf(model_file)
         self.normals = self.calculate_normals(self.vertices, self.faces)
         self.program = self.create_program()
