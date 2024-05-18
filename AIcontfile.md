@@ -67,6 +67,7 @@ The visualization module contains scripts for visualizing different aspects of t
 4. **Documentation**: Create detailed documentation for each module and script, including setup instructions and usage guidelines.
 
 
+
 Notes For AI continued development of JarvisIRL: 
 Directory Structure:
 
