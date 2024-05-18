@@ -31,12 +31,12 @@ uniform vec3 light_pos;
 uniform vec3 view_pos;
 void main() {
     float ambient_strength = 0.1;
-    vec3 ambient = ambient_strength * vec3(1.0, 1.0, 1.0);
+    vec3 ambient = ambient_strength * vec3(0.93, 0.73, 0.73);  // Light pinkish-gray color
 
     vec3 norm = normalize(frag_normal);
     vec3 light_dir = normalize(light_pos - frag_pos);
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = diff * vec3(1.0, 1.0, 1.0);
+    vec3 diffuse = diff * vec3(0.93, 0.73, 0.73);  // Light pinkish-gray color
 
     float specular_strength = 0.5;
     vec3 view_dir = normalize(view_pos - frag_pos);
@@ -44,7 +44,7 @@ void main() {
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
     vec3 specular = specular_strength * spec * vec3(1.0, 1.0, 1.0);
 
-    vec3 color = (ambient + diffuse + specular) * vec3(1.0, 0.0, 0.0);
+    vec3 color = ambient + diffuse + specular;
     fragColor = vec4(color, 1.0);
 }
 """
