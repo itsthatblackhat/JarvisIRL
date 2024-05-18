@@ -1,4 +1,3 @@
-# for prepping text file created from 3MF
 import lib3mf
 import numpy as np
 
@@ -23,8 +22,8 @@ def load_3mf(model_file):
     return np.array(vertices, dtype='f4'), np.array(faces, dtype='i4')
 
 def save_magnet_points(vertices, output_file):
-    # Define magnet points (example: using the first 10 vertices as magnet points)
-    magnet_points = vertices[:10]
+    # Save all vertices as magnet points
+    magnet_points = vertices
 
     # Save magnet points to a file
     with open(output_file, 'w') as f:
@@ -40,24 +39,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-###############
-## old test code
-###############
-## def identify_problematic_bytes(file_path):
-##    problematic_bytes = []
-##     with open(file_path, 'rb') as file:
-##         byte = file.read(1)
-##         while byte:
-##             try:
-##                 byte.decode('utf-8')
-##             except UnicodeDecodeError:
-##                 problematic_bytes.append(byte)
-##             byte = file.read(1)
-##     return problematic_bytes
-## 
-## file_path = "BrainModel/Cleaned_Brainconv.obj"
-## problematic_bytes = identify_problematic_bytes(file_path)
-## print("Problematic bytes:", problematic_bytes)
