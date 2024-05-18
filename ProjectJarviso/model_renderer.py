@@ -2,7 +2,6 @@ import numpy as np
 import pywavefront
 import moderngl
 import moderngl_window as mglw
-from magnet import Magnet
 
 # Vertex shader with Phong shading
 vertex_shader = """
