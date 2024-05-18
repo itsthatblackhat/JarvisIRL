@@ -2,7 +2,6 @@ import numpy as np
 import lib3mf
 import moderngl
 import moderngl_window as mglw
-from moderngl_window import WindowConfig
 
 class ModelRenderer:
     def __init__(self, context, model_file):
@@ -14,8 +13,8 @@ class ModelRenderer:
         self.create_vertex_buffer()
 
     def load_3mf(self, model_file):
-        wrapper = lib3mf.get_wrapper()  # Initialize the wrapper
-        model = wrapper.CreateModel()  # Create a Model instance using the wrapper
+        wrapper = lib3mf.get_wrapper()
+        model = wrapper.CreateModel()
         reader = model.QueryReader("3mf")
         reader.ReadFromFile(model_file)
 
@@ -90,7 +89,6 @@ class ModelRenderer:
         self.context.clear(0.1, 0.1, 0.1)
         self.context.enable(moderngl.DEPTH_TEST)
 
-        # Ensure the matrices are 4x4 and of type float32
         model_matrix = np.array(model_matrix, dtype='f4').reshape(4, 4)
         view_matrix = np.array(view_matrix, dtype='f4').reshape(4, 4)
         projection_matrix = np.array(projection_matrix, dtype='f4').reshape(4, 4)
@@ -102,7 +100,7 @@ class ModelRenderer:
         self.vao.render(moderngl.TRIANGLES)
 
 
-class RendererWindow(WindowConfig):
+class RendererWindow(mglw.WindowConfig):
     gl_version = (3, 3)
     title = "Model Renderer"
     resource_dir = '.'
@@ -110,38 +108,36 @@ class RendererWindow(WindowConfig):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.renderer = ModelRenderer(self.ctx, 'C:\\JarvisIRL\\ProjectJarviso\\BrainModel\\brain3D.3mf')
-        self.rotation_angle = 0.0
+        self.rotation = 0
+        self.translation = np.array([0.0, 0.0, -5.0])
 
     def render(self, time, frame_time):
         model = np.eye(4, dtype='f4')
-        # Scale model to make it more visible
         model = np.dot(model, np.diag([0.1, 0.1, 0.1, 1.0]))
-
-        # Rotate model to look at the front
-        rotation_matrix = np.array([
-            [np.cos(self.rotation_angle), 0, np.sin(self.rotation_angle), 0],
-            [0, 1, 0, 0],
-            [-np.sin(self.rotation_angle), 0, np.cos(self.rotation_angle), 0],
-            [0, 0, 0, 1]
-        ], dtype='f4')
-        model = np.dot(rotation_matrix, model)
-
         view = np.eye(4, dtype='f4')
-        # Translate view to look at the model
-        view = np.dot(view, np.linalg.inv(np.array([[1, 0, 0, 0],
-                                                    [0, 1, 0, -0.5],
-                                                    [0, 0, 1, -5],
-                                                    [0, 0, 0, 1]], dtype='f4')))
+        view = np.dot(view, np.array([[1, 0, 0, 0],
+                                      [0, 1, 0, 0],
+                                      [0, 0, 1, self.translation[2]],
+                                      [0, 0, 0, 1]], dtype='f4'))
         proj = np.eye(4, dtype='f4')
+        model = np.dot(model, np.array([[np.cos(self.rotation), 0, np.sin(self.rotation), 0],
+                                        [0, 1, 0, 0],
+                                        [-np.sin(self.rotation), 0, np.cos(self.rotation), 0],
+                                        [0, 0, 0, 1]], dtype='f4'))
+
         self.renderer.render(model, view, proj)
 
     def key_event(self, key, action, modifiers):
-        keys = self.wnd.keys
-        if action == keys.ACTION_PRESS or action == keys.ACTION_REPEAT:
-            if key == keys.LEFT:
-                self.rotation_angle += 0.1  # Rotate left
-            elif key == keys.RIGHT:
-                self.rotation_angle -= 0.1  # Rotate right
+        if action == self.wnd.keys.ACTION_PRESS:
+            if key == self.wnd.keys.LEFT:
+                self.rotation -= 0.1
+            elif key == self.wnd.keys.RIGHT:
+                self.rotation += 0.1
+            elif key == self.wnd.keys.UP:
+                self.translation[2] += 0.1
+            elif key == self.wnd.keys.DOWN:
+                self.translation[2] -= 0.1
+
 
 if __name__ == "__main__":
     mglw.run_window_config(RendererWindow)
