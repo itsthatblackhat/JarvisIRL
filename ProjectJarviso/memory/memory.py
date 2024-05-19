@@ -2,7 +2,6 @@ import json
 import threading
 from typing import Any, Dict, List
 
-
 class Memory:
     def __init__(self):
         self.memories: List[Dict[str, Any]] = []
@@ -44,7 +43,6 @@ class Memory:
                     self.memories = json.load(file)
             except (IOError, json.JSONDecodeError) as e:
                 print(f"Error loading memories from file: {e}")
-
 
 # Example usage
 if __name__ == "__main__":

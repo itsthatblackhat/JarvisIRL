@@ -1,4 +1,4 @@
-# memory_utils.py
+import json
 
 def preprocess_text(text):
     # Preprocess text data before storing in memory
@@ -17,3 +17,26 @@ def calculate_similarity(memory1, memory2):
     union = len(memory1_set.union(memory2_set))
     similarity = intersection / union if union != 0 else 0
     return similarity
+
+def save_to_file(filepath: str, data):
+    try:
+        with open(filepath, 'w') as file:
+            json.dump(data, file)
+    except IOError as e:
+        print(f"Error saving to file: {e}")
+
+def load_from_file(filepath: str):
+    try:
+        with open(filepath, 'r') as file:
+            return json.load(file)
+    except (IOError, json.JSONDecodeError) as e:
+        print(f"Error loading from file: {e}")
+        return None
+
+# Example usage
+if __name__ == "__main__":
+    data = {'example_key': 'example_value'}
+    save_to_file('example.json', data)
+
+    loaded_data = load_from_file('example.json')
+    print("Loaded Data:", loaded_data)

@@ -1,6 +1,5 @@
 from typing import List
-from memory import Memory
-
+from memory.memory import Memory
 
 class MemoryImprinting(Memory):
     def __init__(self):
@@ -33,7 +32,6 @@ class MemoryImprinting(Memory):
     def load_memories_from_file(self, filepath: str):
         with self.lock:
             super().load_memories_from_file(filepath)
-
 
 # Example usage
 if __name__ == "__main__":
