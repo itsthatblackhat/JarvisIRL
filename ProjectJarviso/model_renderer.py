@@ -3,7 +3,6 @@ import pywavefront
 import moderngl
 import moderngl_window as mglw
 
-# Vertex shader with Phong shading
 vertex_shader = """
 #version 330
 in vec3 in_vert;
@@ -20,7 +19,6 @@ void main() {
 }
 """
 
-# Fragment shader with Phong shading
 fragment_shader = """
 #version 330
 in vec3 frag_pos;
@@ -28,14 +26,15 @@ in vec3 frag_normal;
 out vec4 fragColor;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
+uniform vec3 color;
 void main() {
     float ambient_strength = 0.1;
-    vec3 ambient = ambient_strength * vec3(0.93, 0.73, 0.73);  // Light pinkish-gray color
+    vec3 ambient = ambient_strength * color;
 
     vec3 norm = normalize(frag_normal);
     vec3 light_dir = normalize(light_pos - frag_pos);
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = diff * vec3(0.93, 0.73, 0.73);  // Light pinkish-gray color
+    vec3 diffuse = diff * color;
 
     float specular_strength = 0.5;
     vec3 view_dir = normalize(view_pos - frag_pos);
@@ -43,10 +42,21 @@ void main() {
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
     vec3 specular = specular_strength * spec * vec3(1.0, 1.0, 1.0);
 
-    vec3 color = ambient + diffuse + specular;
-    fragColor = vec4(color, 1.0);
+    vec3 result = ambient + diffuse + specular;
+    fragColor = vec4(result, 1.0);
 }
 """
+
+colors = {
+    "cerebrum": np.array([1.0, 0.0, 0.0], dtype='f4'),  # Red
+    "cerebellum": np.array([0.0, 0.0, 1.0], dtype='f4'),  # Blue
+    "brainstem": np.array([0.0, 1.0, 0.0], dtype='f4'),  # Green
+    "thalamus": np.array([0.5, 0.0, 0.5], dtype='f4'),  # Purple
+    "hypothalamus": np.array([1.0, 0.5, 0.0], dtype='f4'),  # Orange
+    "basal_ganglia": np.array([1.0, 1.0, 0.0], dtype='f4'),  # Yellow
+    "limbic": np.array([0.0, 1.0, 1.0], dtype='f4'),  # Cyan
+    "reticular": np.array([1.0, 0.0, 1.0], dtype='f4')  # Magenta
+}
 
 def calculate_normals(vertices, indices):
     normals = np.zeros(vertices.shape, dtype=vertices.dtype)
@@ -104,8 +114,23 @@ class ModelRenderer:
         self.vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
         self.vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
         self.vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
+        self.vao.program['color'].write(np.array([0.93, 0.73, 0.73], dtype='f4').tobytes())
 
         self.vao.render(moderngl.TRIANGLES)
+
+    def render_activity(self, region, intensity):
+        if not isinstance(intensity, (int, float)):
+            raise ValueError(f"Expected intensity to be int or float, but got {type(intensity).__name__}")
+        color = colors.get(region, np.array([1.0, 1.0, 1.0], dtype='f4'))
+        self.context.clear(0.1 * intensity, 0.1 * intensity, 0.1 * intensity)
+        self.vao.program['color'].write(color)
+
+    def render_communication(self, region, intensity):
+        if not isinstance(intensity, (int, float)):
+            raise ValueError(f"Expected intensity to be int or float, but got {type(intensity).__name__}")
+        color = colors.get(region, np.array([1.0, 1.0, 1.0], dtype='f4'))
+        self.context.clear(0.1 * intensity, 0.1 * intensity, 0.1 * intensity)
+        self.vao.program['color'].write(color)
 
 class RendererWindow(mglw.WindowConfig):
     gl_version = (3, 3)
@@ -123,13 +148,11 @@ class RendererWindow(mglw.WindowConfig):
 
     def render(self, time, frame_time):
         model = np.eye(4, dtype='f4')
-        model = np.dot(model, np.diag([0.1, 0.1, 0.1, 1.0]))  # Adjust scale if needed
+        model = np.dot(model, np.diag([0.1, 0.1, 0.1, 1.0]))
 
-        # Apply auto rotation
         if self.auto_rotate:
             self.rotation[1] += frame_time
 
-        # Apply manual rotation
         model = np.dot(rotation_matrix(self.rotation[0], [1.0, 0.0, 0.0]), model)
         model = np.dot(rotation_matrix(self.rotation[1], [0.0, 1.0, 0.0]), model)
         model = np.dot(rotation_matrix(self.rotation[2], [0.0, 0.0, 1.0]), model)
@@ -164,7 +187,7 @@ class RendererWindow(mglw.WindowConfig):
             elif key == keys.S:
                 self.zoom -= 0.1
             elif key == keys.R:
-                self.auto_rotate = not self.auto_rotate  # Toggle auto-rotate
+                self.auto_rotate = not self.auto_rotate
 
 if __name__ == '__main__':
     mglw.run_window_config(RendererWindow)

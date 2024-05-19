@@ -3,13 +3,23 @@ import logging
 import moderngl
 import threading
 from pathlib import Path
-from subnet import CerebrumNeural, CerebellumNeural, BrainstemNeural, ThalamusNeural, HypothalamusNeural, BasalGangliaNeural, LimbicNeural, ReticularNeural
+from subnet import (
+    BasalGangliaNeural,
+    BrainstemNeural,
+    CerebellumNeural,
+    CerebrumNeural,
+    HypothalamusNeural,
+    LimbicNeural,
+    ReticularNeural,
+    ThalamusNeural,
+)
 from memory.memory import Memory
 from memory.memory_imprinting import MemoryImprinting
-from model_renderer import ModelRenderer  # Import the ModelRenderer here to avoid circular import
+from model_renderer import ModelRenderer
+from visualization import communication_visualization, activity_visualization
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 class MasterNeural:
     def __init__(self, input_size, output_size, ctx, model_file):
@@ -20,14 +30,14 @@ class MasterNeural:
 
         # Initialize sub-neural networks
         self.subnets = {
-            "cerebrum": CerebrumNeural(input_size, output_size),
+            "cerebrum": CerebrumNeural(input_size, output_size, self.model_renderer),
             "cerebellum": CerebellumNeural(input_size, output_size, self.model_renderer),
             "brainstem": BrainstemNeural(input_size, output_size, self.model_renderer),
             "thalamus": ThalamusNeural(input_size, output_size, self.model_renderer),
             "hypothalamus": HypothalamusNeural(input_size, output_size, self.model_renderer),
             "basal_ganglia": BasalGangliaNeural(input_size, output_size, self.model_renderer),
             "limbic": LimbicNeural(input_size, output_size, self.model_renderer),
-            "reticular": ReticularNeural(input_size, output_size, self.model_renderer)
+            "reticular": ReticularNeural(input_size, output_size, self.model_renderer),
         }
 
         # Initialize memory module
@@ -71,18 +81,27 @@ class MasterNeural:
                 model_matrix = np.eye(4)
                 view_matrix = np.eye(4)
                 projection_matrix = np.eye(4)
-                logging.debug(f"Model Matrix:\n{model_matrix}")
-                logging.debug(f"View Matrix:\n{view_matrix}")
-                logging.debug(f"Projection Matrix:\n{projection_matrix}")
-                self.model_renderer.render(model_matrix, view_matrix, projection_matrix)
-            else:
-                logging.debug(f"No action executed for {subnet}")
+                self.model_renderer.render(
+                    model_matrix, view_matrix, projection_matrix, np.array([2.0, 2.0, 2.0]), np.array([0.0, 0.0, 2.0])
+                )
 
     def handle_errors(self):
         logging.debug("Handling errors...")
 
     def ensure_safety(self):
         logging.debug("Ensuring safety...")
+
+    def collect_activity_data(self):
+        activity_data = {}
+        for name, subnet in self.subnets.items():
+            activity_data[name] = subnet.get_activity_data()
+        return activity_data
+
+    def collect_communication_data(self):
+        communication_data = {}
+        for name, subnet in self.subnets.items():
+            communication_data[name] = subnet.get_communication_data()
+        return communication_data
 
     def run(self):
         while True:
@@ -95,41 +114,35 @@ class MasterNeural:
             self.handle_errors()
             self.ensure_safety()
 
+            # Collect data for visualization
+            activity_data = self.collect_activity_data()
+            communication_data = self.collect_communication_data()
+
+            # Start the visualization threads
+            activity_visualization_thread = threading.Thread(
+                target=activity_visualization.start_activity_visualization, args=(activity_data, self.subnets.keys(), self.model_renderer)
+            )
+            communication_visualization_thread = threading.Thread(
+                target=communication_visualization.start_communication_visualization, args=(communication_data, self.subnets.keys(), self.model_renderer)
+            )
+
+            activity_visualization_thread.start()
+            communication_visualization_thread.start()
+
+            activity_visualization_thread.join()
+            communication_visualization_thread.join()
+
+
 def main():
     input_size = 100  # Example input size
     output_size = 10  # Example output size
 
-    # Initialize model rendering context and file
     ctx = moderngl.create_standalone_context()
-    model_file = Path("C:/JarvisIRL/ProjectJarviso/BrainModel/brain3D.3mf")
+    model_file = Path("C:/JarvisIRL/ProjectJarviso/BrainModel/Brain.obj")
 
-    # Initialize and run the master neural network
     master_neural = MasterNeural(input_size, output_size, ctx, model_file)
-
-    from visualization import activity_visualization
-    from visualization import communication_visualization
-
-    # Define activity data and communication data
-    activity_data = {}  # Placeholder for activity data
-    communication_data = {}  # Placeholder for communication data
-
-    # Start the visualization threads
-    activity_visualization_thread = threading.Thread(target=activity_visualization.start_activity_visualization,
-                                                     args=(activity_data, master_neural.subnets.keys(), master_neural.model_renderer))
-    communication_visualization_thread = threading.Thread(
-        target=communication_visualization.start_communication_visualization,
-        args=(communication_data, master_neural.subnets.keys(), master_neural.model_renderer))
-
-    # Start the threads
-    activity_visualization_thread.start()
-    communication_visualization_thread.start()
-
-    # Run MasterNeural
     master_neural.run()
 
-    # Join the visualization threads to ensure they terminate when the main thread terminates
-    activity_visualization_thread.join()
-    communication_visualization_thread.join()
 
 if __name__ == "__main__":
     main()
