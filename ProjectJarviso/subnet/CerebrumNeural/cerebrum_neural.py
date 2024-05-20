@@ -3,12 +3,15 @@ import numpy as np
 import socket
 import threading
 import json
+from memory.memory import Memory
 
 class CerebrumNeural:
     def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5004):
         self.model_renderer = model_renderer
+        self.memory = Memory()
         self.model = tf.keras.Sequential([
-            tf.keras.layers.Dense(128, activation='relu', input_shape=(input_size,)),
+            tf.keras.layers.Input(shape=(input_size,)),
+            tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.Dense(output_size)
         ])

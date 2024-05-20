@@ -1,12 +1,15 @@
+import logging
+import threading
 import time
 import numpy as np
 
-def start_activity_visualization(activity_data, regions, renderer):
-    while True:
-        for region in regions:
-            intensity = activity_data.get(region, 0)
-            renderer.render_activity(region, intensity)
-        time.sleep(1)  # Adjust as necessary to see the updates faster
+
+def start_activity_visualization(activity_data, regions, model_renderer, stop_event):
+    for region, intensity in activity_data.items():
+        model_renderer.render_activity(intensity)
+        if stop_event.is_set():
+            break
+
 
 class ActivityVisualization:
     def __init__(self, brain_regions, model_renderer):

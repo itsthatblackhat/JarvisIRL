@@ -1,64 +1,79 @@
 import json
-import threading
-from typing import Any, Dict, List
+import logging
+from pathlib import Path
 
 class Memory:
-    def __init__(self):
-        self.memories: List[Dict[str, Any]] = []
-        self.lock = threading.Lock()
+    def __init__(self, memory_file='memories.json'):
+        self.memory_file = Path(memory_file)
+        self.memories = self.load_memories()
 
-    def store_memory(self, memory: Dict[str, Any]):
-        with self.lock:
-            self.memories.append(memory)
+    def load_memories(self):
+        if not self.memory_file.exists():
+            logging.warning(f"{self.memory_file} does not exist. Starting with an empty memory.")
+            return []
+        with open(self.memory_file, 'r') as file:
+            try:
+                memories = json.load(file)
+                logging.info(f"Loaded memories from {self.memory_file}")
+                return memories
+            except json.JSONDecodeError as e:
+                logging.error(f"Error decoding JSON from {self.memory_file}: {e}")
+                return []
 
-    def retrieve_memories(self) -> List[Dict[str, Any]]:
-        with self.lock:
-            return self.memories.copy()
+    def save_memories(self):
+        with open(self.memory_file, 'w') as file:
+            json.dump(self.memories, file, indent=4)
+        logging.info(f"Saved memories to {self.memory_file}")
+
+    def add_memory(self, memory, strength=1):
+        self.memories.append({"memory": memory, "strength": strength})
+        self.save_memories()
+        logging.info(f"Added memory: {memory} with strength: {strength}")
+
+    def get_memory(self, memory):
+        for mem in self.memories:
+            if mem["memory"] == memory:
+                return mem
+        return None
+
+    def update_memory(self, memory, strength):
+        for mem in self.memories:
+            if mem["memory"] == memory:
+                mem["strength"] = strength
+                self.save_memories()
+                logging.info(f"Updated memory: {memory} to strength: {strength}")
+                return True
+        return False
+
+    def delete_memory(self, memory):
+        for mem in self.memories:
+            if mem["memory"] == memory:
+                self.memories.remove(mem)
+                self.save_memories()
+                logging.info(f"Deleted memory: {memory}")
+                return True
+        return False
+
+    def list_memories(self):
+        return self.memories
 
     def clear_memories(self):
-        with self.lock:
-            self.memories.clear()
+        self.memories = []
+        self.save_memories()
+        logging.info("Cleared all memories")
 
-    def update_memory_imprints(self, memories: List[str], strength: int = 1):
-        with self.lock:
-            for memory in memories:
-                existing_memory = next((m for m in self.memories if m['memory'] == memory), None)
-                if existing_memory:
-                    existing_memory['strength'] += strength
-                else:
-                    self.memories.append({'memory': memory, 'strength': strength})
+    def save_memories_to_file(self, filepath):
+        try:
+            with open(filepath, 'w') as file:
+                json.dump(self.memories, file, indent=4)
+            logging.info(f"Saved memories to {filepath}")
+        except Exception as e:
+            logging.error(f"Error saving memories to {filepath}: {e}")
 
-    def save_memories_to_file(self, filepath: str):
-        with self.lock:
-            try:
-                with open(filepath, 'w') as file:
-                    json.dump(self.memories, file)
-            except IOError as e:
-                print(f"Error saving memories to file: {e}")
-
-    def load_memories_from_file(self, filepath: str):
-        with self.lock:
-            try:
-                with open(filepath, 'r') as file:
-                    self.memories = json.load(file)
-            except (IOError, json.JSONDecodeError) as e:
-                print(f"Error loading memories from file: {e}")
-
-# Example usage
-if __name__ == "__main__":
-    memory = Memory()
-    memory.store_memory({'memory': 'example_memory_1', 'strength': 1})
-    memory.store_memory({'memory': 'example_memory_2', 'strength': 2})
-
-    print("Stored Memories:", memory.retrieve_memories())
-
-    memory.update_memory_imprints(['example_memory_1', 'example_memory_3'], strength=2)
-
-    print("Updated Memories:", memory.retrieve_memories())
-
-    memory.save_memories_to_file('memories.json')
-    memory.clear_memories()
-    print("Cleared Memories:", memory.retrieve_memories())
-
-    memory.load_memories_from_file('memories.json')
-    print("Loaded Memories:", memory.retrieve_memories())
+    def load_memories_from_file(self, filepath):
+        try:
+            with open(filepath, 'r') as file:
+                self.memories = json.load(file)
+            logging.info(f"Loaded memories from {filepath}")
+        except Exception as e:
+            logging.error(f"Error loading memories from {filepath}: {e}")

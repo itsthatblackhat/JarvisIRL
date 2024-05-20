@@ -1,42 +1,39 @@
 import json
+import logging
 
-def preprocess_text(text):
-    # Preprocess text data before storing in memory
-    # For example, convert text to lowercase, remove punctuation, etc.
-    processed_text = text.lower().strip()
-    processed_text = processed_text.replace('.', '').replace(',', '')  # Remove punctuation
-    return processed_text
+class MemoryUtils:
+    @staticmethod
+    def export_memories(memory_instance, export_file):
+        try:
+            with open(export_file, 'w') as file:
+                json.dump(memory_instance.list_memories(), file, indent=4)
+            logging.info(f"Exported memories to {export_file}")
+        except Exception as e:
+            logging.error(f"Failed to export memories: {e}")
 
-def calculate_similarity(memory1, memory2):
-    # Calculate similarity between two memories
-    # For example, using cosine similarity, Jaccard similarity, etc.
-    # Here, we assume both memories are strings and calculate Jaccard similarity
-    memory1_set = set(memory1.split())
-    memory2_set = set(memory2.split())
-    intersection = len(memory1_set.intersection(memory2_set))
-    union = len(memory1_set.union(memory2_set))
-    similarity = intersection / union if union != 0 else 0
-    return similarity
+    @staticmethod
+    def import_memories(memory_instance, import_file):
+        try:
+            with open(import_file, 'r') as file:
+                imported_memories = json.load(file)
+                for memory in imported_memories:
+                    memory_instance.add_memory(memory["memory"], memory["strength"])
+            logging.info(f"Imported memories from {import_file}")
+        except Exception as e:
+            logging.error(f"Failed to import memories: {e}")
 
-def save_to_file(filepath: str, data):
-    try:
-        with open(filepath, 'w') as file:
-            json.dump(data, file)
-    except IOError as e:
-        print(f"Error saving to file: {e}")
-
-def load_from_file(filepath: str):
-    try:
-        with open(filepath, 'r') as file:
-            return json.load(file)
-    except (IOError, json.JSONDecodeError) as e:
-        print(f"Error loading from file: {e}")
-        return None
-
-# Example usage
-if __name__ == "__main__":
-    data = {'example_key': 'example_value'}
-    save_to_file('example.json', data)
-
-    loaded_data = load_from_file('example.json')
-    print("Loaded Data:", loaded_data)
+    @staticmethod
+    def merge_memories(memory_instance_1, memory_instance_2):
+        combined_memories = memory_instance_1.list_memories() + memory_instance_2.list_memories()
+        merged_memories = []
+        memory_dict = {}
+        for memory in combined_memories:
+            if memory["memory"] in memory_dict:
+                memory_dict[memory["memory"]] += memory["strength"]
+            else:
+                memory_dict[memory["memory"]] = memory["strength"]
+        for memory, strength in memory_dict.items():
+            merged_memories.append({"memory": memory, "strength": strength})
+        memory_instance_1.memories = merged_memories
+        memory_instance_1.save_memories()
+        logging.info("Merged memories from two instances")

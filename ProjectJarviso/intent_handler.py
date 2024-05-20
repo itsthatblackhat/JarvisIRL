@@ -4,13 +4,13 @@ from memory.memory import Memory
 from memory.memory_imprinting import MemoryImprinting
 from visualization.activity_visualization import start_activity_visualization
 from visualization.communication_visualization import start_communication_visualization
-from model_renderer import ModelRenderer
 
 class IntentHandler:
-    def __init__(self, context):
-        self.memory = Memory()
-        self.memory_imprinting = MemoryImprinting()
-        self.model_renderer = ModelRenderer(context, 'C:/JarvisIRL/ProjectJarviso/BrainModel/Brain.obj')
+    def __init__(self, context, model_renderer, memory):
+        self.context = context
+        self.model_renderer = model_renderer
+        self.memory = memory
+        self.memory_imprinting = MemoryImprinting(self.memory)
         self.brain_regions = [
             'cerebrum', 'cerebellum', 'brainstem', 'thalamus', 'hypothalamus',
             'basal_ganglia', 'limbic', 'reticular'
@@ -35,26 +35,34 @@ class IntentHandler:
 
         return intents
 
-    def handle_intents(self, intents):
+    def handle_intents(self, user_input):
+        intents = self.interpret_intents(user_input)
+
         if 'greeting' in intents:
-            self.memory.store_memory({'memory': 'User greeted', 'strength': 1})
+            self.memory.add_memory('User greeted the system')
             logging.error("User greeted the system")
+            return "Hello! How can I assist you today?"
 
         if 'test' in intents:
-            self.memory.store_memory({'memory': 'User initiated test', 'strength': 1})
+            self.memory.add_memory('User initiated test')
             logging.error("User initiated a test")
+            return "Test initiated."
 
         if 'activity' in intents:
-            self.memory.store_memory({'memory': 'User asked for activity visualization', 'strength': 1})
+            self.memory.add_memory('User asked for activity visualization')
             logging.error("Starting activity visualization thread")
             threading.Thread(target=start_activity_visualization,
                              args=(self.activity_data, self.brain_regions, self.model_renderer)).start()
+            return "Activity visualization started."
 
         if 'communication' in intents:
-            self.memory.store_memory({'memory': 'User asked for communication visualization', 'strength': 1})
+            self.memory.add_memory('User asked for communication visualization')
             logging.error("Starting communication visualization thread")
             threading.Thread(target=start_communication_visualization,
                              args=(self.communication_data, self.brain_regions, self.model_renderer)).start()
+            return "Communication visualization started."
+
+        return "Sorry, I didn't understand that."
 
     def update_activity(self, region, intensity):
         if region in self.activity_data:
@@ -64,7 +72,8 @@ class IntentHandler:
         if region in self.communication_data:
             self.communication_data[region] = intensity
 
-    def process_user_input(self, user_input):
+    def process_user_input(self, user_input, past_interactions=None):
         logging.error(f"Processed user input: {user_input}")
-        intents = self.interpret_intents(user_input)
-        self.handle_intents(intents)
+        response = self.handle_intents(user_input)
+        logging.error(response)
+        return response

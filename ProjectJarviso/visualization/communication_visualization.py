@@ -1,12 +1,14 @@
+import logging
+import threading
 import time
 import numpy as np
 
-def start_communication_visualization(communication_data, regions, renderer):
-    while True:
-        for region in regions:
-            intensity = communication_data.get(region, 0)
-            renderer.render_communication(region, intensity)
-            time.sleep(1)  # Adjust as necessary
+def start_communication_visualization(communication_data, regions, model_renderer, stop_event):
+    for region, intensity in communication_data.items():
+        model_renderer.render_communication(intensity)
+        if stop_event.is_set():
+            break
+
 
 class CommunicationVisualization:
     def __init__(self, brain_regions, model_renderer):

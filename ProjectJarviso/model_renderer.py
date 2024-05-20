@@ -4,8 +4,9 @@ import moderngl
 import moderngl_window as mglw
 import logging
 
+# Vertex and fragment shaders for the main model rendering
 vertex_shader = """
-#version 330
+#version 330 core
 in vec3 in_vert;
 in vec3 in_norm;
 uniform mat4 model;
@@ -21,7 +22,7 @@ void main() {
 """
 
 fragment_shader = """
-#version 330
+#version 330 core
 in vec3 frag_pos;
 in vec3 frag_normal;
 out vec4 fragColor;
@@ -48,6 +49,39 @@ void main() {
 }
 """
 
+# Vertex and fragment shaders for point sprites
+vertex_shader_point = """
+#version 330 core
+layout(location = 0) in vec3 in_vert;
+layout(location = 1) in vec3 in_color;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+
+out vec3 frag_color;
+
+void main() {
+    gl_Position = proj * view * model * vec4(in_vert, 1.0);
+    gl_PointSize = 10.0;
+    frag_color = in_color;
+}
+"""
+
+fragment_shader_point = """
+#version 330 core
+in vec3 frag_color;
+out vec4 fragColor;
+
+void main() {
+    float distance = length(gl_PointCoord - vec2(0.5));
+    if (distance > 0.5) {
+        discard;
+    }
+    fragColor = vec4(frag_color, 1.0);
+}
+"""
+
 def calculate_normals(vertices, indices):
     normals = np.zeros(vertices.shape, dtype=vertices.dtype)
     tris = vertices[indices].reshape(-1, 3, 3)
@@ -70,33 +104,15 @@ def rotation_matrix(angle, axis):
         [0, 0, 0, 1]
     ], dtype='f4')
 
-class BufferManager:
-    def __init__(self, context):
-        self.context = context
-        self.buffers = {}
-
-    def create_buffer(self, data, buffer_type='generic'):
-        try:
-            buffer = self.context.buffer(data)
-            self.buffers[buffer_type] = buffer
-            return buffer
-        except Exception as e:
-            logging.error(f"Error creating {buffer_type} buffer: {e}")
-            return None
-
-    def get_buffer(self, buffer_type):
-        return self.buffers.get(buffer_type, None)
-
 class ModelRenderer:
     def __init__(self, context, obj_path):
-        logging.debug("Initializing ModelRenderer")
+        logging.error("Initializing ModelRenderer")
         self.context = context
-        self.buffer_manager = BufferManager(context)
         scene = pywavefront.Wavefront(obj_path, collect_faces=True)
         self.vertices = np.array(scene.vertices, dtype='f4')
         self.indices = np.hstack([np.array(mesh.faces, dtype='i4') for mesh in scene.mesh_list])
 
-        logging.debug(f"Loaded {len(self.vertices)} vertices and {len(self.indices)} indices")
+        logging.error(f"Loaded {len(self.vertices)} vertices and {len(self.indices)} indices")
 
         # Calculate normals if not provided
         if hasattr(scene, 'normals') and scene.normals:
@@ -104,121 +120,105 @@ class ModelRenderer:
         else:
             self.normals = calculate_normals(self.vertices, self.indices)
 
-        self.vbo = self.buffer_manager.create_buffer(np.hstack((self.vertices, self.normals)).astype('f4').tobytes(), buffer_type='vbo')
-        self.ibo = self.buffer_manager.create_buffer(self.indices.tobytes(), buffer_type='ibo')
-        self.vao = self.context.vertex_array(
-            self.context.program(
-                vertex_shader=vertex_shader,
-                fragment_shader=fragment_shader
-            ),
-            [(self.vbo, '3f 3f', 'in_vert', 'in_norm')],
-            self.ibo
-        )
+        self.create_main_buffers()
+        self.create_point_shader()
 
-        logging.debug("ModelRenderer initialized successfully")
-
-    def render(self, model_matrix, view_matrix, projection_matrix, light_pos, view_pos):
+    def create_main_buffers(self):
         try:
-            self.context.clear(0.1, 0.1, 0.1)
-            self.context.enable(moderngl.DEPTH_TEST)
-            self.context.enable(moderngl.CULL_FACE)
-
-            self.vao.program['model'].write(model_matrix.astype('f4').tobytes())
-            self.vao.program['view'].write(view_matrix.astype('f4').tobytes())
-            self.vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
-            self.vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
-            self.vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
-            self.vao.program['color'].write(np.array([0.93, 0.73, 0.73], dtype='f4').tobytes())
-
-            self.vao.render(moderngl.TRIANGLES)
-        except Exception as e:
-            logging.error(f"Error in render: {e}")
-
-    def render_activity(self, region, intensity):
-        try:
-            offset = 0.1
-            vertices_with_offset = self.vertices + self.normals * offset
-            logging.debug(f"Rendering activity for region: {region}, intensity: {intensity}")
-            logging.debug(f"Vertices with offset: {vertices_with_offset.shape}, Normals: {self.normals.shape}")
-            activity_vbo_data = np.hstack((vertices_with_offset, self.normals)).astype('f4').tobytes()
-            logging.debug(f"Activity VBO data size: {len(activity_vbo_data)}")
-
-            activity_vbo = self.buffer_manager.create_buffer(activity_vbo_data, buffer_type='activity_vbo')
-            activity_vao = self.context.vertex_array(
-                self.vao.program,
-                [(activity_vbo, '3f 3f', 'in_vert', 'in_norm')],
+            self.vbo = self.context.buffer(np.hstack((self.vertices, self.normals)).astype('f4').tobytes())
+            self.ibo = self.context.buffer(self.indices.tobytes())
+            self.vao = self.context.vertex_array(
+                self.context.program(
+                    vertex_shader=vertex_shader,
+                    fragment_shader=fragment_shader
+                ),
+                [(self.vbo, '3f 3f', 'in_vert', 'in_norm')],
                 self.ibo
             )
+            logging.error("Main VBO and IBO created successfully")
+        except Exception as e:
+            logging.error(f"Error creating main buffers: {e}")
 
-            model_matrix = np.eye(4, dtype='f4')
-            view_matrix = np.eye(4, dtype='f4')
-            projection_matrix = np.eye(4, dtype='f4')
+    def create_point_shader(self):
+        try:
+            self.point_program = self.context.program(
+                vertex_shader=vertex_shader_point,
+                fragment_shader=fragment_shader_point
+            )
+            self.point_vbo = self.context.buffer(reserve=1024)
+            self.point_vao = self.context.vertex_array(
+                self.point_program,
+                [(self.point_vbo, '3f 3f', 'in_vert', 'in_color')]
+            )
+            logging.error("Point shader and buffers created successfully")
+        except Exception as e:
+            logging.error(f"Error creating point shader: {e}")
 
-            view_matrix[3][2] = -5.0
+    def render(self, model_matrix, view_matrix, projection_matrix, light_pos, view_pos):
+        self.context.clear(0.1, 0.1, 0.1)
+        self.context.enable(moderngl.DEPTH_TEST)
+        self.context.enable(moderngl.CULL_FACE)
 
-            aspect_ratio = 1.0
-            projection_matrix[0][0] = 1.0 / (aspect_ratio * np.tan(np.radians(45.0) / 2))
-            projection_matrix[1][1] = 1.0 / np.tan(np.radians(45.0) / 2)
-            projection_matrix[2][2] = - (1000.0 + 0.1) / (1000.0 - 0.1)
-            projection_matrix[2][3] = -1.0
-            projection_matrix[3][2] = - (2 * 1000.0 * 0.1) / (1000.0 - 0.1)
-            projection_matrix[3][3] = 0.0
+        self.vao.program['model'].write(model_matrix.astype('f4').tobytes())
+        self.vao.program['view'].write(view_matrix.astype('f4').tobytes())
+        self.vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
+        self.vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
+        self.vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
+        self.vao.program['color'].write(np.array([0.93, 0.73, 0.73], dtype='f4').tobytes())
 
-            light_pos = np.array([2.0, 2.0, 2.0], dtype='f4')
-            view_pos = np.array([0.0, 0.0, 5.0], dtype='f4')
+        self.vao.render(moderngl.TRIANGLES)
 
-            activity_vao.program['model'].write(model_matrix.astype('f4').tobytes())
-            activity_vao.program['view'].write(view_matrix.astype('f4').tobytes())
-            activity_vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
-            activity_vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
-            activity_vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
-            activity_vao.program['color'].write(np.array([intensity, 0.0, 0.0], dtype='f4').tobytes())
+    def render_activity(self, activity_data):
+        try:
+            points = []
+            for region, intensity in activity_data.items():
+                # Example positions for each region
+                position = [0.0, 0.0, 0.0]
+                if region == 'cerebrum':
+                    position = [1.0, 0.5, 0.0]
+                elif region == 'cerebellum':
+                    position = [0.5, 0.5, 0.0]
+                # Add more regions and their positions here...
+                color = [intensity, 0.0, 0.0]  # Red color for activity
+                points.extend(position + color)
 
-            activity_vao.render(moderngl.TRIANGLES)
+            points = np.array(points, dtype='f4')
+            self.point_vbo.orphan(size=len(points) * points.itemsize)
+            self.point_vbo.write(points.tobytes())
+
+            self.context.point_size = 10.0
+            self.point_program['model'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_program['view'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_program['proj'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_vao.render(moderngl.POINTS)
+            logging.error("Rendered activity points")
         except Exception as e:
             logging.error(f"Error in render_activity: {e}")
 
-    def render_communication(self, region, intensity):
+    def render_communication(self, communication_data):
         try:
-            offset = 0.1
-            vertices_with_offset = self.vertices + self.normals * offset
-            logging.debug(f"Rendering communication for region: {region}, intensity: {intensity}")
-            logging.debug(f"Vertices with offset: {vertices_with_offset.shape}, Normals: {self.normals.shape}")
-            communication_vbo_data = np.hstack((vertices_with_offset, self.normals)).astype('f4').tobytes()
-            logging.debug(f"Communication VBO data size: {len(communication_vbo_data)}")
+            points = []
+            for region, intensity in communication_data.items():
+                # Example positions for each region
+                position = [0.0, 0.0, 0.0]
+                if region == 'cerebrum':
+                    position = [1.0, 0.5, 0.0]
+                elif region == 'cerebellum':
+                    position = [0.5, 0.5, 0.0]
+                # Add more regions and their positions here...
+                color = [0.0, 0.0, intensity]  # Blue color for communication
+                points.extend(position + color)
 
-            communication_vbo = self.buffer_manager.create_buffer(communication_vbo_data, buffer_type='communication_vbo')
-            communication_vao = self.context.vertex_array(
-                self.vao.program,
-                [(communication_vbo, '3f 3f', 'in_vert', 'in_norm')],
-                self.ibo
-            )
+            points = np.array(points, dtype='f4')
+            self.point_vbo.orphan(size=len(points) * points.itemsize)
+            self.point_vbo.write(points.tobytes())
 
-            model_matrix = np.eye(4, dtype='f4')
-            view_matrix = np.eye(4, dtype='f4')
-            projection_matrix = np.eye(4, dtype='f4')
-
-            view_matrix[3][2] = -5.0
-
-            aspect_ratio = 1.0
-            projection_matrix[0][0] = 1.0 / (aspect_ratio * np.tan(np.radians(45.0) / 2))
-            projection_matrix[1][1] = 1.0 / np.tan(np.radians(45.0) / 2)
-            projection_matrix[2][2] = - (1000.0 + 0.1) / (1000.0 - 0.1)
-            projection_matrix[2][3] = -1.0
-            projection_matrix[3][2] = - (2 * 1000.0 * 0.1) / (1000.0 - 0.1)
-            projection_matrix[3][3] = 0.0
-
-            light_pos = np.array([2.0, 2.0, 2.0], dtype='f4')
-            view_pos = np.array([0.0, 0.0, 5.0], dtype='f4')
-
-            communication_vao.program['model'].write(model_matrix.astype('f4').tobytes())
-            communication_vao.program['view'].write(view_matrix.astype('f4').tobytes())
-            communication_vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
-            communication_vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
-            communication_vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
-            communication_vao.program['color'].write(np.array([0.0, 0.0, intensity], dtype='f4').tobytes())
-
-            communication_vao.render(moderngl.TRIANGLES)
+            self.context.point_size = 10.0
+            self.point_program['model'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_program['view'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_program['proj'].write(np.eye(4, dtype='f4').tobytes())
+            self.point_vao.render(moderngl.POINTS)
+            logging.error("Rendered communication points")
         except Exception as e:
             logging.error(f"Error in render_communication: {e}")
 
