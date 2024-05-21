@@ -23,42 +23,6 @@ JarvisIRL is an artificial intelligence project aimed at creating a virtual assi
 3. Follow the on-screen prompts to interact with JarvisIRL.
 
 
- 
- 
-## Project Structure
-The project directory structure is organized as follows:
-JarvisIRL/
-│
-├── BrainModel/                 # Directory containing 3D brain model files
-│   ├── Brain.obj               # OBJ file for the brain model
-│
-├── data/                       # Directory for storing data files
-│   ├── memories.json           # JSON file for storing memories
-│
-├── subnet/                     # Directory containing neural network classes
-│   ├── basal_ganglia_neural.py # Implementation of the Basal Ganglia neural network
-│   ├── brainstem_neural.py     # Implementation of the Brainstem neural network
-│   ├── cerebellum_neural.py    # Implementation of the Cerebellum neural network
-│   ├── cerebrum_neural.py      # Implementation of the Cerebrum neural network
-│   ├── hypothalamus_neural.py  # Implementation of the Hypothalamus neural network
-│   ├── limbic_neural.py        # Implementation of the Limbic neural network
-│   ├── reticular_neural.py     # Implementation of the Reticular neural network
-│   ├── thalamus_neural.py      # Implementation of the Thalamus neural network
-│
-├── memory/                     # Directory for memory management
-│   ├── __init__.py             # Initialization file for memory module
-│   ├── memory.py               # Implementation of the Memory class
-│   ├── memory_imprinting.py    # Implementation of the MemoryImprinting class
-│   ├── memory_utils.py         # Utility functions for memory management
-│
-├── visualization/              # Directory containing visualization modules
-│   ├── communication_visualization.py   # Implementation of CommunicationVisualization class
-│   ├── activity_visualization.py        # Implementation of ActivityVisualization class
-│
-├── master.py                   # Main file containing the MasterNeural class
-├── model_renderer.py           # Implementation of the ModelRenderer class
-├── requirements.txt            # List of project dependencies
-└── README.md                   # Project README file
 
 ## Contributing
 Contributions to JarvisIRL are welcome! If you have any suggestions, bug fixes, or new features to propose, please feel free to open an issue or submit a pull request.
