@@ -61,19 +61,3 @@ class Memory:
         self.memories = []
         self.save_memories()
         logging.info("Cleared all memories")
-
-    def save_memories_to_file(self, filepath):
-        try:
-            with open(filepath, 'w') as file:
-                json.dump(self.memories, file, indent=4)
-            logging.info(f"Saved memories to {filepath}")
-        except Exception as e:
-            logging.error(f"Error saving memories to {filepath}: {e}")
-
-    def load_memories_from_file(self, filepath):
-        try:
-            with open(filepath, 'r') as file:
-                self.memories = json.load(file)
-            logging.info(f"Loaded memories from {filepath}")
-        except Exception as e:
-            logging.error(f"Error loading memories from {filepath}: {e}")

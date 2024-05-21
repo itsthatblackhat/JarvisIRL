@@ -1,14 +1,13 @@
 import tensorflow as tf
-import numpy as np
 import socket
 import threading
 import json
-from memory.memory import Memory
+import numpy as np
 
 class BrainstemNeural:
     def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5002):
         self.model_renderer = model_renderer
-        self.memory = Memory()
+        self.input_size = input_size
         self.model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=(input_size,)),
             tf.keras.layers.Dense(128, activation='relu'),
@@ -21,6 +20,16 @@ class BrainstemNeural:
         self.server_thread.start()
 
     def forward(self, inputs):
+        # Convert string input to list of ASCII values and pad/truncate to input_size
+        if isinstance(inputs, tf.Tensor):
+            inputs = inputs.numpy().tolist()
+        if isinstance(inputs[0], str):
+            ascii_values = [ord(char) for char in inputs[0]]
+            if len(ascii_values) < self.input_size:
+                ascii_values += [0] * (self.input_size - len(ascii_values))  # Padding with zeros
+            else:
+                ascii_values = ascii_values[:self.input_size]  # Truncating to input_size
+            inputs = tf.convert_to_tensor([ascii_values], dtype=tf.float32)
         return self.model(inputs)
 
     def get_activity_data(self):

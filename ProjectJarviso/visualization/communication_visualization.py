@@ -3,11 +3,16 @@ import threading
 import time
 import numpy as np
 
-def start_communication_visualization(communication_data, regions, model_renderer, stop_event):
-    for region, intensity in communication_data.items():
-        model_renderer.render_communication(intensity)
-        if stop_event.is_set():
-            break
+def start_communication_visualization(communication_data, brain_regions, model_renderer, stop_event):
+    try:
+        while not stop_event.is_set():
+            for region in brain_regions:
+                intensity = communication_data[region].get('intensity', 0.0)
+                model_renderer.render_communication(region, intensity)
+            logging.error("Rendered communication points")
+            time.sleep(1)
+    except Exception as e:
+        logging.error(f"Error in communication visualization: {e}")
 
 
 class CommunicationVisualization:

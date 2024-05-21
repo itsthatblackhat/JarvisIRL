@@ -24,14 +24,14 @@ class HypothalamusNeural:
         return self.model(inputs)
 
     def get_activity_data(self):
-        # Placeholder for real activity data
         activity_level = np.random.random()
-        return activity_level
+        self.memory.add_memory(f'Hypothalamus activity: {activity_level}', strength=activity_level)
+        return {'intensity': activity_level}
 
     def get_communication_data(self):
-        # Placeholder for real communication data
         communication_level = np.random.random()
-        return communication_level
+        self.memory.add_memory(f'Hypothalamus communication: {communication_level}', strength=communication_level)
+        return {'intensity': communication_level}
 
     def handle_client(self, client_socket):
         try:

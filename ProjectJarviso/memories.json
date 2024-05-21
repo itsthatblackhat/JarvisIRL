@@ -46,5 +46,29 @@
     {
         "memory": "User initiated test",
         "strength": 1
+    },
+    {
+        "memory": "User greeted the system",
+        "strength": 1
+    },
+    {
+        "memory": "User greeted the system",
+        "strength": 1
+    },
+    {
+        "memory": "User initiated test",
+        "strength": 1
+    },
+    {
+        "memory": "User greeted the system",
+        "strength": 1
+    },
+    {
+        "memory": "User initiated test",
+        "strength": 1
+    },
+    {
+        "memory": "User initiated test",
+        "strength": 1
     }
 ]
