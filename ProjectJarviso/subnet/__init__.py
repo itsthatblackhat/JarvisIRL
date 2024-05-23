@@ -6,6 +6,8 @@ from .HypothalamusNeural.hypothalamus_neural import HypothalamusNeural
 from .LimbicNeural.limbic_neural import LimbicNeural
 from .ReticularNeural.reticular_neural import ReticularNeural
 from .ThalamusNeural.thalamus_neural import ThalamusNeural
+from .IntentProcessingNeural.intent_processing_neural import IntentProcessingNeural
+from .AudioProcessingNeural.audio_processing_neural import AudioProcessingNeural
 
 __all__ = [
     "BasalGangliaNeural",
@@ -15,5 +17,7 @@ __all__ = [
     "HypothalamusNeural",
     "LimbicNeural",
     "ReticularNeural",
-    "ThalamusNeural"
+    "ThalamusNeural",
+    "IntentProcessingNeural",
+    "AudioProcessingNeural"
 ]

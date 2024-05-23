@@ -5,8 +5,10 @@ import socket
 import threading
 import json
 
-class IntentProcessingNeural:
-    def __init__(self, input_size, output_size, memory, model_renderer, host='localhost', port=5010):
+class AudioProcessingNeural:
+    def __init__(self, input_size, output_size, memory, model_renderer, host='localhost', port=5009):
+        self.input_size = input_size
+        self.output_size = output_size
         self.memory = memory
         self.model_renderer = model_renderer
         self.host = host
@@ -17,10 +19,12 @@ class IntentProcessingNeural:
 
     def build_model(self, input_size, output_size):
         model = models.Sequential([
-            layers.Input(shape=(input_size, )),
-            layers.Embedding(input_dim=1000, output_dim=64),
-            layers.LSTM(128, return_sequences=True),
-            layers.LSTM(128),
+            layers.Input(shape=(input_size, 1)),  # Adjusted input shape
+            layers.Conv1D(16, 3, activation='relu'),
+            layers.MaxPooling1D(2),
+            layers.Conv1D(32, 3, activation='relu'),
+            layers.MaxPooling1D(2),
+            layers.Flatten(),
             layers.Dense(64, activation='relu'),
             layers.Dense(output_size, activation='softmax')
         ])
@@ -59,7 +63,7 @@ class IntentProcessingNeural:
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.host, self.port))
         server.listen(5)
-        print(f"[*] IntentProcessingNeural listening on {self.host}:{self.port}")
+        print(f"[*] AudioProcessingNeural listening on {self.host}:{self.port}")
         while True:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))

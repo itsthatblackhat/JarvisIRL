@@ -1,8 +1,8 @@
 import logging
 from typing import List
-from memory.memory import Memory
+from memory import Memory
 
-class MemoryImprinting(Memory):
+class MemoryImprinting:
     def __init__(self, memory):
         self.memory = memory
 
@@ -21,6 +21,8 @@ class MemoryImprinting(Memory):
 
     def clear_weak_memories(self, threshold: int = 0):
         self.memory.memories = [memory for memory in self.memory.memories if memory['strength'] >= threshold]
+        self.memory.save_memories()
+        logging.info(f"Cleared weak memories with strength below {threshold}")
 
     def save_memories_to_file(self, filepath: str):
         self.memory.save_memories_to_file(filepath)

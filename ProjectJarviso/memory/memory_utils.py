@@ -1,7 +1,6 @@
 import json
 import logging
 
-
 class MemoryUtils:
     @staticmethod
     def load_memory_from_file(file_path):

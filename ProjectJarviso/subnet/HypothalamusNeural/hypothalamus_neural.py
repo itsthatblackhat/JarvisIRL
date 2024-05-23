@@ -9,29 +9,47 @@ class HypothalamusNeural:
     def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5005):
         self.model_renderer = model_renderer
         self.memory = Memory()
-        self.model = tf.keras.Sequential([
+        self.host = host
+        self.port = port
+        self.model = self.build_model(input_size, output_size)
+        self.server_thread = threading.Thread(target=self.start_server)
+        self.server_thread.start()
+
+    def build_model(self, input_size, output_size):
+        model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=(input_size,)),
             tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.Dense(output_size)
         ])
-        self.host = host
-        self.port = port
-        self.server_thread = threading.Thread(target=self.start_server)
-        self.server_thread.start()
+        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        return model
 
     def forward(self, inputs):
         return self.model(inputs)
 
     def get_activity_data(self):
-        activity_level = np.random.random()
-        self.memory.add_memory(f'Hypothalamus activity: {activity_level}', strength=activity_level)
-        return {'intensity': activity_level}
+        neuron_activations = self.model.layers[0].output
+        activation_values = tf.keras.backend.eval(neuron_activations)
+        avg_activation = np.mean(activation_values)
+        self.memory.add_memory(f'Hypothalamus activity: {avg_activation}', strength=avg_activation)
+        activity_data = {
+            'average_activation': float(avg_activation),
+            'activation_values': activation_values.tolist()
+        }
+        return activity_data
 
     def get_communication_data(self):
-        communication_level = np.random.random()
-        self.memory.add_memory(f'Hypothalamus communication: {communication_level}', strength=communication_level)
-        return {'intensity': communication_level}
+        inputs = tf.keras.backend.placeholder(shape=(1, self.input_size))
+        gradients = tf.keras.backend.gradients(self.model.output, self.model.input)
+        grad_values = tf.keras.backend.function([self.model.input], gradients)([inputs])
+        avg_gradient = np.mean(grad_values)
+        self.memory.add_memory(f'Hypothalamus communication: {avg_gradient}', strength=avg_gradient)
+        communication_data = {
+            'average_gradient': float(avg_gradient),
+            'gradient_values': grad_values.tolist()
+        }
+        return communication_data
 
     def handle_client(self, client_socket):
         try:
@@ -56,3 +74,7 @@ class HypothalamusNeural:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))
             client_handler.start()
+
+    def start_listening(self):
+        # This method is a placeholder to match the MasterNeural interface
+        pass
