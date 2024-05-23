@@ -1,84 +1,86 @@
-import json
-import logging
-import socket
 import threading
+import logging
 import numpy as np
-import tensorflow as tf
-from memory.memory import Memory
-from memory.memory_imprinting import MemoryImprinting
-from memory.memory_utils import MemoryUtils
-from subnet.BasalGangliaNeural.basal_ganglia_neural import BasalGangliaNeural
-from subnet.BrainstemNeural.brainstem_neural import BrainstemNeural
-from subnet.CerebellumNeural.cerebellum_neural import CerebellumNeural
-from subnet.CerebrumNeural.cerebrum_neural import CerebrumNeural
-from subnet.HypothalamusNeural.hypothalamus_neural import HypothalamusNeural
-from subnet.LimbicNeural.limbic_neural import LimbicNeural
-from subnet.ReticularNeural.reticular_neural import ReticularNeural
-from subnet.ThalamusNeural.thalamus_neural import ThalamusNeural
-from subnet.IntentProcessingNeural.intent_processing_neural import IntentProcessingNeural
+import moderngl
+from subnet import AudioProcessingNeural as AudioProcessingNeuralClass
+from subnet import BasalGangliaNeural as BasalGangliaNeuralClass
+from subnet import BrainstemNeural as BrainstemNeuralClass
+from subnet import CerebellumNeural as CerebellumNeuralClass
+from subnet import CerebrumNeural as CerebrumNeuralClass
+from subnet import HypothalamusNeural as HypothalamusNeuralClass
+from subnet import LimbicNeural as LimbicNeuralClass
+from subnet import ReticularNeural as ReticularNeuralClass
+from subnet import ThalamusNeural as ThalamusNeuralClass
+from subnet import IntentProcessingNeural as IntentProcessingNeuralClass
 from model_renderer import ModelRenderer
+from intent_handler import IntentHandler
+from memory import Memory
 
 
 class MasterNeural:
-    def __init__(self, input_size, output_size, ctx, model_file):
+    def __init__(self, context):
+        self.context = context
         self.memory = Memory()
-        self.memory_imprinting = MemoryImprinting(self.memory)
-        self.model_renderer = ModelRenderer(ctx, model_file)
-        self.input_size = input_size
-        self.output_size = output_size
+        self.renderer = ModelRenderer(self.context, 'C:/JarvisIRL/ProjectJarviso/BrainModel/Brain.obj')
+        self.intent_handler = IntentHandler(context=self.context, model_renderer=self.renderer, memory=self.memory)
+        self.neural_networks = self.initialize_neural_networks()
 
-        self.networks = {
-            'basal_ganglia': BasalGangliaNeural(input_size, output_size, self.model_renderer),
-            'brainstem': BrainstemNeural(input_size, output_size, self.model_renderer),
-            'cerebellum': CerebellumNeural(input_size, output_size, self.model_renderer),
-            'cerebrum': CerebrumNeural(input_size, output_size, self.model_renderer),
-            'hypothalamus': HypothalamusNeural(input_size, output_size, self.model_renderer),
-            'limbic': LimbicNeural(input_size, output_size, self.model_renderer),
-            'reticular': ReticularNeural(input_size, output_size, self.model_renderer),
-            'thalamus': ThalamusNeural(input_size, output_size, self.model_renderer),
-            'intent_processing': IntentProcessingNeural(input_size, output_size, self.model_renderer)
+    def initialize_neural_networks(self):
+        input_size = 256
+        output_size = 10
+
+        basal_ganglia_neural = BasalGangliaNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        brainstem_neural = BrainstemNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        cerebellum_neural = CerebellumNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        cerebrum_neural = CerebrumNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        hypothalamus_neural = HypothalamusNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        limbic_neural = LimbicNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        reticular_neural = ReticularNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        thalamus_neural = ThalamusNeuralClass(input_size=input_size, output_size=output_size, model_renderer=self.renderer)
+        intent_processing_neural = IntentProcessingNeuralClass(input_size=input_size, output_size=output_size, memory=self.memory, model_renderer=self.renderer)
+        audio_processing_neural = AudioProcessingNeuralClass(input_size=input_size, output_size=output_size, memory=self.memory, model_renderer=self.renderer)
+
+        return {
+            "basal_ganglia": basal_ganglia_neural,
+            "brainstem": brainstem_neural,
+            "cerebellum": cerebellum_neural,
+            "cerebrum": cerebrum_neural,
+            "hypothalamus": hypothalamus_neural,
+            "limbic": limbic_neural,
+            "reticular": reticular_neural,
+            "thalamus": thalamus_neural,
+            "intent_processing": intent_processing_neural,
+            "audio_processing": audio_processing_neural
         }
 
+    def start_neural_networks(self):
+        for name, network in self.neural_networks.items():
+            logging.info(f"Starting {name} neural network...")
+            threading.Thread(target=network.start_listening).start()
+
     def handle_intent(self, user_input):
-        intents = self.networks['intent_processing'].process_intent(user_input)
+        intents = self.intent_handler.process_user_input(user_input)
         for intent, active in intents.items():
-            if active and intent in self.networks:
-                return self.networks[intent].forward(np.random.rand(1, self.input_size).astype(np.float32))
+            if active and intent in self.neural_networks:
+                return self.neural_networks[intent].forward(np.random.rand(1, 256, 1).astype(np.float32))  # Adjusted input shape
         logging.error(f"Unhandled intent: {intents}")
         return "Sorry, I didn't understand that."
 
 
 def main():
-    input_size = 256  # example size
-    output_size = 10  # example size
-    ctx = None  # appropriate context for ModelRenderer
-    model_file = 'BrainModel/Brain.obj'  # path to the model file
+    logging.info("Starting Jarvis Neural Network System...")
 
-    master_neural = MasterNeural(input_size, output_size, ctx, model_file)
+    # Creating OpenGL context
+    context = moderngl.create_standalone_context()
 
-    host = 'localhost'
-    port = 5000
+    master_neural = MasterNeural(context)
 
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((host, port))
-    server.listen(5)
-    logging.info(f"[*] MasterNeural listening on {host}:{port}")
+    # Log neural network services
+    for i, (name, network) in enumerate(master_neural.neural_networks.items(), start=1):
+        logging.info(f"[*] {name.capitalize()}Neural listening on localhost:{5000 + i}")
 
-    while True:
-        client_socket, addr = server.accept()
-        client_handler = threading.Thread(target=handle_client, args=(client_socket, master_neural))
-        client_handler.start()
-
-
-def handle_client(client_socket, master_neural):
-    with client_socket as sock:
-        while True:
-            request = sock.recv(1024).decode('utf-8')
-            if not request:
-                break
-            user_input = request.strip()
-            response = master_neural.handle_intent(user_input)
-            sock.send(response.encode('utf-8'))
+    # Start Neural Network Threads
+    master_neural.start_neural_networks()
 
 
 if __name__ == "__main__":

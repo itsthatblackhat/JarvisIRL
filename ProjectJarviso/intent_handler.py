@@ -16,14 +16,12 @@ class IntentHandler:
             'basal_ganglia', 'limbic', 'reticular'
         ]
 
-        # Initialize activity and communication data structures
         self.activity_data = {region: 0.0 for region in self.brain_regions}
         self.communication_data = {region: 0.0 for region in self.brain_regions}
 
     def interpret_intents(self, user_input):
         intents = {}
 
-        # Simple keyword-based intent extraction
         if "hello" in user_input.lower():
             intents['greeting'] = True
         if "test" in user_input.lower():
@@ -40,24 +38,20 @@ class IntentHandler:
 
         if 'greeting' in intents:
             self.memory.add_memory('User greeted the system')
-            logging.error("User greeted the system")
             return "Hello! How can I assist you today?"
 
         if 'test' in intents:
             self.memory.add_memory('User initiated test')
-            logging.error("User initiated a test")
             return "Test initiated."
 
         if 'activity' in intents:
             self.memory.add_memory('User asked for activity visualization')
-            logging.error("Starting activity visualization thread")
             threading.Thread(target=start_activity_visualization,
                              args=(self.activity_data, self.brain_regions, self.model_renderer)).start()
             return "Activity visualization started."
 
         if 'communication' in intents:
             self.memory.add_memory('User asked for communication visualization')
-            logging.error("Starting communication visualization thread")
             threading.Thread(target=start_communication_visualization,
                              args=(self.communication_data, self.brain_regions, self.model_renderer)).start()
             return "Communication visualization started."
@@ -72,8 +66,5 @@ class IntentHandler:
         if region in self.communication_data:
             self.communication_data[region] = intensity
 
-    def process_user_input(self, user_input, past_interactions=None):
-        logging.error(f"Processed user input: {user_input}")
-        response = self.handle_intents(user_input)
-        logging.error(response)
-        return response
+    def process_user_input(self, user_input):
+        return self.handle_intents(user_input)

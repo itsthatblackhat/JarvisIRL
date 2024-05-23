@@ -49,7 +49,7 @@ void main() {
 }
 """
 
-# Vertex and fragment shaders for point sprites
+# Vertex and fragment shaders for the point rendering
 vertex_shader_point = """
 #version 330 core
 layout(location = 0) in vec3 in_vert;
@@ -106,15 +106,14 @@ def rotation_matrix(angle, axis):
 
 class ModelRenderer:
     def __init__(self, context, obj_path):
-        logging.error("Initializing ModelRenderer")
+        logging.info("Initializing ModelRenderer")
         self.context = context
         scene = pywavefront.Wavefront(obj_path, collect_faces=True)
         self.vertices = np.array(scene.vertices, dtype='f4')
         self.indices = np.hstack([np.array(mesh.faces, dtype='i4') for mesh in scene.mesh_list])
 
-        logging.error(f"Loaded {len(self.vertices)} vertices and {len(self.indices)} indices")
+        logging.info(f"Loaded {len(self.vertices)} vertices and {len(self.indices)} indices")
 
-        # Calculate normals if not provided
         if hasattr(scene, 'normals') and scene.normals:
             self.normals = np.array(scene.normals, dtype='f4')
         else:
@@ -135,7 +134,7 @@ class ModelRenderer:
                 [(self.vbo, '3f 3f', 'in_vert', 'in_norm')],
                 self.ibo
             )
-            logging.error("Main VBO and IBO created successfully")
+            logging.info("Main VBO and IBO created successfully")
         except Exception as e:
             logging.error(f"Error creating main buffers: {e}")
 
@@ -150,36 +149,37 @@ class ModelRenderer:
                 self.point_program,
                 [(self.point_vbo, '3f 3f', 'in_vert', 'in_color')]
             )
-            logging.error("Point shader and buffers created successfully")
+            logging.info("Point shader and buffers created successfully")
         except Exception as e:
             logging.error(f"Error creating point shader: {e}")
 
     def render(self, model_matrix, view_matrix, projection_matrix, light_pos, view_pos):
-        self.context.clear(0.1, 0.1, 0.1)
-        self.context.enable(moderngl.DEPTH_TEST)
-        self.context.enable(moderngl.CULL_FACE)
+        try:
+            self.context.clear(0.1, 0.1, 0.1)
+            self.context.enable(moderngl.DEPTH_TEST)
+            self.context.enable(moderngl.CULL_FACE)
 
-        self.vao.program['model'].write(model_matrix.astype('f4').tobytes())
-        self.vao.program['view'].write(view_matrix.astype('f4').tobytes())
-        self.vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
-        self.vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
-        self.vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
-        self.vao.program['color'].write(np.array([0.93, 0.73, 0.73], dtype='f4').tobytes())
+            self.vao.program['model'].write(model_matrix.astype('f4').tobytes())
+            self.vao.program['view'].write(view_matrix.astype('f4').tobytes())
+            self.vao.program['proj'].write(projection_matrix.astype('f4').tobytes())
+            self.vao.program['light_pos'].write(light_pos.astype('f4').tobytes())
+            self.vao.program['view_pos'].write(view_pos.astype('f4').tobytes())
+            self.vao.program['color'].write(np.array([0.93, 0.73, 0.73], dtype='f4').tobytes())
 
-        self.vao.render(moderngl.TRIANGLES)
+            self.vao.render(moderngl.TRIANGLES)
+        except Exception as e:
+            logging.error(f"Error during rendering: {e}")
 
     def render_activity(self, activity_data):
         try:
             points = []
             for region, intensity in activity_data.items():
-                # Example positions for each region
                 position = [0.0, 0.0, 0.0]
                 if region == 'cerebrum':
                     position = [1.0, 0.5, 0.0]
                 elif region == 'cerebellum':
                     position = [0.5, 0.5, 0.0]
-                # Add more regions and their positions here...
-                color = [intensity, 0.0, 0.0]  # Red color for activity
+                color = [intensity, 0.0, 0.0]
                 points.extend(position + color)
 
             points = np.array(points, dtype='f4')
@@ -191,7 +191,7 @@ class ModelRenderer:
             self.point_program['view'].write(np.eye(4, dtype='f4').tobytes())
             self.point_program['proj'].write(np.eye(4, dtype='f4').tobytes())
             self.point_vao.render(moderngl.POINTS)
-            logging.error("Rendered activity points")
+            logging.info("Rendered activity points")
         except Exception as e:
             logging.error(f"Error in render_activity: {e}")
 
@@ -199,14 +199,12 @@ class ModelRenderer:
         try:
             points = []
             for region, intensity in communication_data.items():
-                # Example positions for each region
                 position = [0.0, 0.0, 0.0]
                 if region == 'cerebrum':
                     position = [1.0, 0.5, 0.0]
                 elif region == 'cerebellum':
                     position = [0.5, 0.5, 0.0]
-                # Add more regions and their positions here...
-                color = [0.0, 0.0, intensity]  # Blue color for communication
+                color = [0.0, 0.0, intensity]
                 points.extend(position + color)
 
             points = np.array(points, dtype='f4')
@@ -218,7 +216,7 @@ class ModelRenderer:
             self.point_program['view'].write(np.eye(4, dtype='f4').tobytes())
             self.point_program['proj'].write(np.eye(4, dtype='f4').tobytes())
             self.point_vao.render(moderngl.POINTS)
-            logging.error("Rendered communication points")
+            logging.info("Rendered communication points")
         except Exception as e:
             logging.error(f"Error in render_communication: {e}")
 
