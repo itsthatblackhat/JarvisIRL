@@ -92,60 +92,70 @@ This document provides an in-depth overview of each file in the JARVISIRL projec
 #### audio_processing_neural.py
 - **Purpose**: Processes audio inputs for neural network tasks.
 - **Interactions**: Communicates with the `master.py` for processing audio data.
+- **Features**: Capable of training and predicting audio processing tasks, continuously improving through training.
 
 ### BasalGangliaNeural Directory
 
 #### basal_ganglia_neural.py
 - **Purpose**: Simulates the functions of the basal ganglia in the brain.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### BrainstemNeural Directory
 
 #### brainstem_neural.py
 - **Purpose**: Simulates the functions of the brainstem.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### CerebellumNeural Directory
 
 #### cerebellum_neural.py
 - **Purpose**: Simulates the functions of the cerebellum.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### CerebrumNeural Directory
 
 #### cerebrum_neural.py
 - **Purpose**: Simulates the functions of the cerebrum.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### HypothalamusNeural Directory
 
 #### hypothalamus_neural.py
 - **Purpose**: Simulates the functions of the hypothalamus.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### IntentProcessingNeural Directory
 
 #### intent_processing_neural.py
 - **Purpose**: Processes user intents based on neural network analysis.
 - **Interactions**: Works with `intent_handler.py` to process and act on user inputs.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### LimbicNeural Directory
 
 #### limbic_neural.py
 - **Purpose**: Simulates the functions of the limbic system.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### ReticularNeural Directory
 
 #### reticular_neural.py
 - **Purpose**: Simulates the functions of the reticular formation.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ### ThalamusNeural Directory
 
 #### thalamus_neural.py
 - **Purpose**: Simulates the functions of the thalamus.
 - **Interactions**: Part of the sub-neural networks managed by `master.py`.
+- **Features**: Includes server functionality to listen for requests and provide neural activity and communication data.
 
 ## tests Directory
 - **Purpose**: Contains test scripts for various components of the system.
