@@ -2,11 +2,6 @@
 
 This document provides an in-depth overview of each file in the JARVISIRL project, explaining its purpose, functionality, and how it interacts with the rest of the project.
 
-## Root Directory
-
-### Jarvis notes.txt
-- **Description**: Contains miscellaneous notes and information relevant to the project.
-
 ## ProjectJarviso Directory
 
 ### continuous_listening.py
@@ -16,10 +11,6 @@ This document provides an in-depth overview of each file in the JARVISIRL projec
 ### intent_handler.py
 - **Purpose**: Processes user inputs to identify intents and route them to appropriate neural networks.
 - **Interactions**: Integrates with the `master.py` to handle intents and communicates with all sub-neural networks.
-
-### main.py
-- **Purpose**: The main entry point for initializing and starting the system.
-- **Interactions**: Initializes the `master.py` and starts the main execution loop.
 
 ### master.py
 - **Purpose**: Coordinates the entire system by initializing sub-neural networks and handling intents.
@@ -34,10 +25,6 @@ This document provides an in-depth overview of each file in the JARVISIRL projec
 - **Interactions**: Used by `intent_handler` to provide audio feedback to users.
 
 ## BrainModel Directory
-
-### Brain.obj
-- **Purpose**: 3D model of the brain used for rendering and visualization.
-- **Interactions**: Loaded and displayed by `model_renderer.py`.
 
 ## data Directory
 - **Purpose**: Contains datasets used for training and testing the neural networks.
