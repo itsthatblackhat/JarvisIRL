@@ -3,15 +3,18 @@ import numpy as np
 import socket
 import threading
 import json
+import logging
 
 class BasalGangliaNeural:
     def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5001):
         self.input_size = input_size
         self.output_size = output_size
         self.model_renderer = model_renderer
-        self.model = self.build_model()
         self.host = host
         self.port = port
+        self.model = self.build_model()
+        self.server_thread = threading.Thread(target=self.start_server)
+        self.server_thread.start()
 
     def build_model(self):
         model = tf.keras.Sequential([
@@ -23,11 +26,11 @@ class BasalGangliaNeural:
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
         return model
 
-    def start_listening(self):
+    def start_server(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.host, self.port))
         server.listen(5)
-        print(f"[*] BasalGangliaNeural listening on {self.host}:{self.port}")
+        logging.info(f"[*] BasalGangliaNeural listening on {self.host}:{self.port}")
         while True:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))
@@ -43,7 +46,7 @@ class BasalGangliaNeural:
                 response = {"error": "Unknown request type"}
             client_socket.send(json.dumps(response).encode('utf-8'))
         except Exception as e:
-            print(f"Error handling client: {e}")
+            logging.error(f"Error handling client: {e}")
         finally:
             client_socket.close()
 
@@ -51,3 +54,7 @@ class BasalGangliaNeural:
         inputs = np.array(inputs).reshape(-1, self.input_size)
         prediction = self.model.predict(inputs)
         return prediction.tolist()
+
+    def start_listening(self):
+        # This method is a placeholder to match the MasterNeural interface
+        pass

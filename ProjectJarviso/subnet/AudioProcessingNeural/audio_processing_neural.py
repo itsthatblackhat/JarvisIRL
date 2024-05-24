@@ -6,26 +6,22 @@ import threading
 import json
 
 class AudioProcessingNeural:
-    def __init__(self, input_size, output_size, memory, model_renderer, host='localhost', port=5009):
+    def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5009):
         self.input_size = input_size
         self.output_size = output_size
-        self.memory = memory
         self.model_renderer = model_renderer
         self.host = host
         self.port = port
         self.model = self.build_model(input_size, output_size)
         self.server_thread = threading.Thread(target=self.start_server)
+        self.server_thread.daemon = True  # Ensure this thread won't block the program from exiting
         self.server_thread.start()
 
     def build_model(self, input_size, output_size):
         model = models.Sequential([
-            layers.Input(shape=(input_size, 1)),  # Adjusted input shape
-            layers.Conv1D(16, 3, activation='relu'),
-            layers.MaxPooling1D(2),
-            layers.Conv1D(32, 3, activation='relu'),
-            layers.MaxPooling1D(2),
-            layers.Flatten(),
-            layers.Dense(64, activation='relu'),
+            layers.Input(shape=(input_size, )),
+            layers.Dense(128, activation='relu'),
+            layers.Dense(128, activation='relu'),
             layers.Dense(output_size, activation='softmax')
         ])
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -48,6 +44,7 @@ class AudioProcessingNeural:
         logging.info(f"Model loaded from {filepath}")
 
     def handle_client(self, client_socket):
+        global response
         try:
             request = client_socket.recv(1024)
             data = json.loads(request.decode('utf-8'))
@@ -55,7 +52,7 @@ class AudioProcessingNeural:
                 response = {'prediction': self.predict(data['input'])}
             client_socket.send(json.dumps(response).encode('utf-8'))
         except Exception as e:
-            print(f"Error handling client: {e}")
+            logging.error(f"Error handling client: {e}")
         finally:
             client_socket.close()
 
@@ -63,10 +60,11 @@ class AudioProcessingNeural:
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.host, self.port))
         server.listen(5)
-        print(f"[*] AudioProcessingNeural listening on {self.host}:{self.port}")
+        logging.info(f"[*] AudioProcessingNeural listening on {self.host}:{self.port}")
         while True:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))
+            client_handler.daemon = True  # Ensure this thread won't block the program from exiting
             client_handler.start()
 
     def start_listening(self):

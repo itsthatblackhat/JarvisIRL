@@ -13,6 +13,7 @@ class IntentProcessingNeural:
         self.port = port
         self.model = self.build_model(input_size, output_size)
         self.server_thread = threading.Thread(target=self.start_server)
+        self.server_thread.daemon = True  # Ensure this thread won't block the program from exiting
         self.server_thread.start()
 
     def build_model(self, input_size, output_size):
@@ -44,6 +45,7 @@ class IntentProcessingNeural:
         logging.info(f"Model loaded from {filepath}")
 
     def handle_client(self, client_socket):
+        global response
         try:
             request = client_socket.recv(1024)
             data = json.loads(request.decode('utf-8'))
@@ -51,18 +53,23 @@ class IntentProcessingNeural:
                 response = {'prediction': self.predict(data['input'])}
             client_socket.send(json.dumps(response).encode('utf-8'))
         except Exception as e:
-            print(f"Error handling client: {e}")
+            logging.error(f"Error handling client: {e}")
         finally:
             client_socket.close()
+
+    def handle_input(self, input_data):
+        logging.info(f"Handling input: {input_data}")
+        # Add logic to handle the input data
 
     def start_server(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.host, self.port))
         server.listen(5)
-        print(f"[*] IntentProcessingNeural listening on {self.host}:{self.port}")
+        logging.info(f"[*] IntentProcessingNeural listening on {self.host}:{self.port}")
         while True:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))
+            client_handler.daemon = True  # Ensure this thread won't block the program from exiting
             client_handler.start()
 
     def start_listening(self):

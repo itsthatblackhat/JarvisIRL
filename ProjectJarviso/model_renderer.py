@@ -1,8 +1,8 @@
 import numpy as np
-import pywavefront
 import moderngl
 import moderngl_window as mglw
 import logging
+from smooth_obj_parser import CustomWavefront
 
 # Vertex and fragment shaders for the main model rendering
 vertex_shader = """
@@ -108,14 +108,14 @@ class ModelRenderer:
     def __init__(self, context, obj_path):
         logging.info("Initializing ModelRenderer")
         self.context = context
-        scene = pywavefront.Wavefront(obj_path, collect_faces=True)
-        self.vertices = np.array(scene.vertices, dtype='f4')
-        self.indices = np.hstack([np.array(mesh.faces, dtype='i4') for mesh in scene.mesh_list])
+        wavefront = CustomWavefront(obj_path, create_materials=True, collect_faces=True)
+        self.vertices = np.array(wavefront.vertices, dtype='f4')
+        self.indices = np.hstack([np.array(mesh.faces, dtype='i4') for mesh in wavefront.mesh_list])
 
         logging.info(f"Loaded {len(self.vertices)} vertices and {len(self.indices)} indices")
 
-        if hasattr(scene, 'normals') and scene.normals:
-            self.normals = np.array(scene.normals, dtype='f4')
+        if hasattr(wavefront, 'normals') and wavefront.normals:
+            self.normals = np.array(wavefront.normals, dtype='f4')
         else:
             self.normals = calculate_normals(self.vertices, self.indices)
 

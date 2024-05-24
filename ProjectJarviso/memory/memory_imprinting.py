@@ -1,6 +1,7 @@
+# memory/memory_imprinting.py
 import logging
 from typing import List
-from memory import Memory
+from memory.memory import Memory
 
 class MemoryImprinting:
     def __init__(self, memory):

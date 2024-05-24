@@ -8,12 +8,11 @@ def start_communication_visualization(communication_data, brain_regions, model_r
         while not stop_event.is_set():
             for region in brain_regions:
                 intensity = communication_data[region].get('intensity', 0.0)
-                model_renderer.render_communication(region, intensity)
-            logging.error("Rendered communication points")
+                model_renderer.render_communication({region: intensity})
+            logging.info("Rendered communication points")
             time.sleep(1)
     except Exception as e:
         logging.error(f"Error in communication visualization: {e}")
-
 
 class CommunicationVisualization:
     def __init__(self, brain_regions, model_renderer):
@@ -26,8 +25,8 @@ class CommunicationVisualization:
         view_matrix = np.eye(4, dtype='f4')
         projection_matrix = np.eye(4, dtype='f4')
 
-        # Example of camera positioning
-        view_matrix[3][2] = -5.0
+        # Camera positioning to match model_renderer
+        view_matrix[3][2] = -2.0  # Use the same zoom level as in RendererWindow
 
         aspect_ratio = 1.0  # Assuming square window for simplicity
         projection_matrix[0][0] = 1.0 / (aspect_ratio * np.tan(np.radians(45.0) / 2))
@@ -38,7 +37,7 @@ class CommunicationVisualization:
         projection_matrix[3][3] = 0.0
 
         # Render the model
-        self.model_renderer.render(model_matrix, view_matrix, projection_matrix, np.array([2.0, 2.0, 2.0]), np.array([0.0, 0.0, 5.0]))
+        self.model_renderer.render(model_matrix, view_matrix, projection_matrix, np.array([2.0, 2.0, 2.0]), np.array([0.0, 0.0, 2.0]))
 
         # Render communication overlay
-        self.model_renderer.render_communication_overlay(communication_data)
+        self.model_renderer.render_communication(communication_data)

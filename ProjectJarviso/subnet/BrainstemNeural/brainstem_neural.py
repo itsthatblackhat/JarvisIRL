@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
 import logging
@@ -7,6 +8,8 @@ import json
 
 class BrainstemNeural:
     def __init__(self, input_size, output_size, model_renderer, host='localhost', port=5002):
+        self.input_size = input_size  # Set input_size to match the expected input size
+        self.output_size = output_size
         self.model_renderer = model_renderer
         self.host = host
         self.port = port
@@ -45,10 +48,13 @@ class BrainstemNeural:
             request = client_socket.recv(1024)
             data = json.loads(request.decode('utf-8'))
             if data['type'] == 'predict':
-                response = {'prediction': self.predict(data['input'])}
+                prediction = self.predict(np.array(data['input']).reshape(-1, self.input_size))
+                response = {'prediction': prediction.tolist()}
+            else:
+                response = {'error': 'Invalid request type'}
             client_socket.send(json.dumps(response).encode('utf-8'))
         except Exception as e:
-            print(f"Error handling client: {e}")
+            logging.error(f"Error handling client: {e}")
         finally:
             client_socket.close()
 
@@ -56,7 +62,7 @@ class BrainstemNeural:
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.host, self.port))
         server.listen(5)
-        print(f"[*] BrainstemNeural listening on {self.host}:{self.port}")
+        logging.info(f"[*] BrainstemNeural listening on {self.host}:{self.port}")
         while True:
             client, addr = server.accept()
             client_handler = threading.Thread(target=self.handle_client, args=(client,))
